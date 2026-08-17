@@ -1,0 +1,83 @@
+name: Nueva tarea
+description: Crear una actividad de trabajo para el proyecto
+title: "[TAREA] "
+labels: []
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Nueva actividad del proyecto
+        Registre claramente la actividad que se realizará durante la iteración.
+
+  - type: dropdown
+    id: iteracion
+    attributes:
+      label: Iteración
+      description: Seleccione la iteración a la que pertenece esta actividad.
+      options:
+        - Iteración 01
+        - Iteración 02
+        - Iteración 03
+        - Iteración Final
+    validations:
+      required: true
+
+  - type: dropdown
+    id: componente
+    attributes:
+      label: Componente
+      description: Seleccione el componente principal relacionado con la actividad.
+      options:
+        - Documentación
+        - Base de datos
+        - Backend
+        - Frontend
+        - Mobile
+        - Pruebas
+        - Integración
+        - Despliegue
+        - Otro
+    validations:
+      required: true
+
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: Explique claramente qué debe realizarse.
+      placeholder: Describa la actividad, funcionalidad o problema que se debe resolver.
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Indique las condiciones que deben cumplirse para considerar terminada la actividad.
+      placeholder: |
+        - Criterio 1
+        - Criterio 2
+        - Criterio 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidencias
+    attributes:
+      label: Evidencias esperadas
+      description: Indique qué evidencias demostrarán que la actividad fue realizada.
+      placeholder: Código, pruebas, documentación, capturas, API funcionando, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: verificacion
+    attributes:
+      label: Verificación
+      options:
+        - label: La actividad tiene un alcance claramente definido.
+          required: true
+        - label: La actividad corresponde a la iteración seleccionada.
+          required: true
