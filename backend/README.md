@@ -35,21 +35,21 @@ Git
 # 🚀 Instalación y Configuración Local
 Sigue estos pasos para levantar el entorno de desarrollo local:
 
-1. Navegar a la carpeta del backend
+### 1. Navegar a la carpeta del backend
 
 ```text 
 cd backend
 ```
 
 
-2. Crear el entorno virtual
+### 2. Crear el entorno virtual
 
-# En Windows (si `python` no funciona, usa `py`):
+En Windows (si `python` no funciona, usa `py`):
 ```text 
 python -m venv .venv
 ```
 
-3. Activar el entorno virtual
+### 3. Activar el entorno virtual
 
 - Windows (PowerShell):
 
@@ -64,21 +64,21 @@ source .venv/bin/activate
 ```
 
 
-4. Instalar dependencias
+### 4. Instalar dependencias
 
 ```text 
 pip install -r requirements.txt
 ```
 
 
-5. Configurar variables de entorno
+### 5. Configurar variables de entorno
 Crea una copia del archivo .env.example y llámalo .env:
 
 ```text 
 cp .env.example .env
 ```
 
-🏃‍♂️ Ejecución del Servidor
+## 🏃‍♂️ Ejecución del Servidor
 Para iniciar el servidor en modo desarrollo con recarga automática:
 
 ```text 
@@ -87,7 +87,7 @@ uvicorn app.main:app --reload
 
 
 
-El servidor estará disponible en:
+# El servidor estará disponible en:
 
 API Base: http://127.0.0.1:8000
 
