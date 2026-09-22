@@ -26,7 +26,7 @@ backend/app/
 ├── config.py       # Carga de variables de entorno
 ├── database.py     # Configuración y sesión de la base de datos
 └── main.py         # Punto de entrada de la aplicación y configuración de CORS
-
+```
 
 # ⚙️ Requisitos Previos
 Python 3.10+
@@ -37,40 +37,53 @@ Sigue estos pasos para levantar el entorno de desarrollo local:
 
 1. Navegar a la carpeta del backend
 
+```text 
 cd backend
+```
 
 
 2. Crear el entorno virtual
 
 # En Windows (si `python` no funciona, usa `py`):
+```text 
 python -m venv .venv
-
+```
 
 3. Activar el entorno virtual
 
 - Windows (PowerShell):
 
-    .\.venv\Scripts\activate
+```text 
+.\.venv\Scripts\activate
+```
 
 - Git Bash / Linux / macOS:
 
-    source .venv/bin/activate
+```text 
+source .venv/bin/activate
+```
 
 
 4. Instalar dependencias
 
-    pip install -r requirements.txt
+```text 
+pip install -r requirements.txt
+```
 
 
 5. Configurar variables de entorno
 Crea una copia del archivo .env.example y llámalo .env:
 
+```text 
 cp .env.example .env
+```
 
 🏃‍♂️ Ejecución del Servidor
 Para iniciar el servidor en modo desarrollo con recarga automática:
 
+```text 
 uvicorn app.main:app --reload
+```
 
 
 
