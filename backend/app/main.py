@@ -1,0 +1,21 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(
+    title="API Torneo Colegial",
+    description="Backend en FastAPI para la gestión del Torneo Colegial",
+    version="1.0.0"
+)
+
+# Configuración de CORS para conectar con el frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Habilita cualquier origen durante desarrollo
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def read_root():
+    return {"mensaje": "API Torneo Colegial activa y funcionando"}
