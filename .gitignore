@@ -1,1 +1,32 @@
-backend/.env
+# === Entornos Virtuales y Dependencias ===
+.venv/
+venv/
+ENV/
+env/
+
+# === Cache de Python y Compilados ===
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+
+# === Variables de Entorno y Secretos ===
+.env
+*.env
+!.env.example
+
+# === Archivos de Editores e IDEs ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Archivos del Sistema Operativo ===
+.DS_Store
+Thumbs.db
+
+# === Logs y Archivos de Base de Datos Locales ===
+*.log
+*.sqlite3
+*.db
