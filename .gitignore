@@ -5,6 +5,7 @@ ENV/
 env/
 
 # === Cache de Python y Compilados ===
+app/__pycache__/
 __pycache__/
 *.py[cod]
 *$py.class
