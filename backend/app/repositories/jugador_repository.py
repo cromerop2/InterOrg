@@ -18,3 +18,9 @@ class JugadorRepository:
         self.db.refresh(nuevo_jugador)
         
         return nuevo_jugador
+
+    def buscar_por_id(self, jugador_id: int) -> JugadorModel:
+        return self.db.query(JugadorModel).filter(JugadorModel.id == jugador_id).first()
+
+    def obtener_todos(self) -> list[JugadorModel]:
+        return self.db.query(JugadorModel).all()

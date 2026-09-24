@@ -18,3 +18,16 @@ def agregar_jugador(
     service: JugadorService = Depends(get_jugador_service)
 ):
     return service.registrar_jugador(jugador)
+
+@router.get("/{jugador_id}", response_model=JugadorResponse)
+def obtener_jugador(
+    jugador_id: int,
+    service: JugadorService = Depends(get_jugador_service)
+):
+    return service.obtener_jugador_por_id(jugador_id)
+
+@router.get("/", response_model=list[JugadorResponse])
+def obtener_todos_los_jugadores(
+    service: JugadorService = Depends(get_jugador_service)
+):
+    return service.obtener_todos_los_jugadores()

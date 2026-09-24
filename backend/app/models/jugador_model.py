@@ -4,7 +4,7 @@ from app.database import Base
 class JugadorModel(Base):
     __tablename__ = "jugadores"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre = Column(String(100), nullable=False)
     identificacion = Column(String(20), unique=True, nullable=False)
     fecha_nacimiento = Column(String(10), nullable=True)
