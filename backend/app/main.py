@@ -1,11 +1,16 @@
 from fastapi import FastAPI
+from fastapi import Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from app.schemas.jugador_schema import JugadorCreate, JugadorResponse
+from app.routers import jugador_router
 
 app = FastAPI(
     title="API Torneo Colegial",
     description="Backend en FastAPI para la gestión del Torneo Colegial",
     version="1.0.0"
 )
+
 
 # Configuración de CORS para conectar con el frontend
 app.add_middleware(
@@ -16,6 +21,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"mensaje": "API Torneo Colegial activa y funcionando"}
+
+app.include_router(jugador_router.router)
+
+
+
+app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
