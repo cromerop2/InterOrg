@@ -4,7 +4,7 @@ from typing import Optional
 class JugadorBase(BaseModel):
     nombre: str = Field(..., example="Juan Pérez")
     identificacion: str = Field(..., example="123456789")
-    Date: Optional[str] = Field(None, example="2005-05-15")
+    fecha_nacimiento: Optional[str] = Field(None, example="2005-05-15")
     numero_camiseta: int = Field(..., example=10)
     posicion: str = Field(..., example="Delantero")
 

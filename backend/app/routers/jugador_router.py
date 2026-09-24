@@ -1,20 +1,20 @@
-from fastapi import APIRouter, Body
-from app.schemas import JugadorCreate, JugadorResponse
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.schemas.jugador_schema import JugadorCreate, JugadorResponse
+from app.repositories.jugador_repository import JugadorRepository
+from app.services.jugador_service import JugadorService
 
-router = APIRouter(
-    prefix="/jugadores",
-    tags=["Jugadores"]
-)
+router = APIRouter(prefix="/jugadores", tags=["Jugadores"])
 
-jugadores = []
+# Inyección de dependencias para el servicio
+def get_jugador_service(db: Session = Depends(get_db)) -> JugadorService:
+    repository = JugadorRepository(db)
+    return JugadorService(repository)
 
-@router.get("/", response_model=list[JugadorResponse])
-def obtener_jugadores():
-    return jugadores
-
-@router.post("/", response_model=JugadorResponse)
-def agregar_jugador(jugador: JugadorCreate = Body(...)):
-    nuevo_jugador = jugador.model_dump()
-    nuevo_jugador["id"] = len(jugadores) + 1
-    jugadores.append(nuevo_jugador)
-    return JugadorResponse(**nuevo_jugador)
+@router.post("/", response_model=JugadorResponse, status_code=status.HTTP_201_CREATED)
+def agregar_jugador(
+    jugador: JugadorCreate,  # Pydantic valida automáticamente el Body sin necesidad de Body(...)
+    service: JugadorService = Depends(get_jugador_service)
+):
+    return service.registrar_jugador(jugador)
