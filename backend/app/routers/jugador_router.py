@@ -7,9 +7,8 @@ router = APIRouter(
 )
 
 jugadores = []
-id_counter = 1
 
-@router.get("/")
+@router.get("/", response_model=list[JugadorResponse])
 def obtener_jugadores():
     return jugadores
 
