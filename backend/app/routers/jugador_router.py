@@ -12,6 +12,8 @@ def get_jugador_service(db: Session = Depends(get_db)) -> JugadorService:
     repository = JugadorRepository(db)
     return JugadorService(repository)
 
+
+# REGISTRAR JUGADOR
 @router.post("/", response_model=JugadorResponse, status_code=status.HTTP_201_CREATED)
 def agregar_jugador(
     jugador: JugadorCreate,  # Pydantic valida automáticamente el Body sin necesidad de Body(...)
@@ -19,6 +21,8 @@ def agregar_jugador(
 ):
     return service.registrar_jugador(jugador)
 
+
+# OBTENER JUGADOR POR ID
 @router.get("/{jugador_id}", response_model=JugadorResponse)
 def obtener_jugador(
     jugador_id: int,
@@ -26,6 +30,8 @@ def obtener_jugador(
 ):
     return service.obtener_jugador_por_id(jugador_id)
 
+
+# OBTENER TODOS LOS JUGADORES
 @router.get("/", response_model=list[JugadorResponse])
 def obtener_todos_los_jugadores(
     service: JugadorService = Depends(get_jugador_service)
