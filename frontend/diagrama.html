@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diagrama de Clases — Torneo Colegial</title>
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --panel: #FFFFFF;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --muted: #64748B;
+    --accent: #16A34A;
+    --accent-2: #1E3A8A;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #0B1220;
+      --panel: #121A2B;
+      --border: #24304A;
+      --text: #E5EAF3;
+      --muted: #94A3B8;
+      --accent: #22C55E;
+      --accent-2: #60A5FA;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B1220;
+    --panel: #121A2B;
+    --border: #24304A;
+    --text: #E5EAF3;
+    --muted: #94A3B8;
+    --accent: #22C55E;
+    --accent-2: #60A5FA;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100%;
+  }
+  header {
+    padding: 20px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    background: var(--bg);
+    z-index: 5;
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    color: var(--accent-2);
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 0.85rem;
+    max-width: 900px;
+  }
+  main {
+    max-width: 100%;
+    padding: 16px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0 20px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .legend span {
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: var(--panel);
+  }
+  .diagram-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  pre.mermaid {
+    margin: 0;
+    min-width: 1400px;
+  }
+  footer {
+    padding: 24px 16px 40px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    max-width: 900px;
+  }
+  footer code {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Diagrama de Clases — Torneo Colegial</h1>
+  <div class="sub">Modelo completo a partir de las 18 clases del sistema: usuarios y roles, entidades de competición, y entidades de juego/estadísticas. Desliza horizontalmente para ver el diagrama completo.</div>
+</header>
+<main>
+  <div class="legend">
+    <span>▷ Herencia (Admin/Entrenador/Árbitro heredan de Usuario)</span>
+    <span>◆ Composición (el hijo no existe sin el padre)</span>
+    <span>→ Asociación (Foreign Key)</span>
+  </div>
+  <div class="diagram-wrap">
+<pre class="mermaid">
+classDiagram
+    direction TB
+
+    class Usuario {
+        +int id
+        +string nombre_completo
+        +string email
+        +string password_hash
+        +Enum rol
+        +bool estado_activo
+        +datetime fecha_creacion
+        +crear(usuario_in) UsuarioModel
+        +obtener_por_email(email) UsuarioModel
+        +obtener_por_id(id_usuario) UsuarioModel
+        +modificar_estado(id_usuario, activo) UsuarioModel
+        +registrar_usuario(datos_registro)
+        +autenticar_usuario(email, password_plana) string
+        +verificar_permisos(token, roles_permitidos) bool
+    }
+
+    class Administrador {
+        +string nivel_acceso
+        +string telefono_contacto
+        +configurar_torneo(datos_torneo) TorneoModel
+        +estructurar_fases(id_torneo, config_fases)
+        +generar_programacion_general(id_torneo)
+        +registrar_staff(datos, rol_asignado)
+        +auditar_inscripcion_equipo(id_equipo, id_pago) bool
+        +asignar_arbitro_partido(id_partido, id_arbitro)
+        +modificar_acta_cerrada(id_partido, nuevos_datos, motivo)
+        +aplicar_sancion_disciplinaria(id_jugador, fechas)
+    }
+
+    class Entrenador {
+        +string telefono_contacto
+        +int colegio_id
+        +registrar_equipo(datos_equipo) EquipoModel
+        +agregar_jugador_plantilla(id_equipo, datos) JugadorModel
+        +dar_de_baja_jugador(id_jugador)
+        +cargar_comprobante_pago(id_equipo, datos_pago)
+        +enviar_alineacion(id_partido, jugadores)
+        +consultar_calendario(id_equipo) List~PartidoModel~
+    }
+
+    class Arbitro {
+        +string telefono_contacto
+        +string numero_colegiado
+        +consultar_asignaciones(id_arbitro) List~PartidoModel~
+        +iniciar_partido(id_partido)
+        +registrar_evento(id_partido, datos) EventoPartidoModel
+        +registrar_marcador(id_partido, gl, gv) MarcadorModel
+        +cerrar_acta_oficial(id_partido)
+    }
+
+    class Colegio {
+        +int id
+        +string nombre
+        +string direccion
+        +string representante_legal
+        +string telefono_contacto
+        +string email_institucional
+        +bool estado_activo
+        +crear_colegio(datos) ColegioModel
+        +obtener_por_id(id_colegio) ColegioModel
+        +obtener_todos(activos_solamente) List~ColegioModel~
+        +actualizar_detalles(id_colegio, datos) ColegioModel
+        +obtener_equipos_inscritos(id_colegio) List~EquipoModel~
+        +vincular_entrenador(id_colegio, id_entrenador)
+    }
+
+    class Equipo {
+        +int id
+        +int colegio_id
+        +int entrenador_id
+        +int torneo_id
+        +string nombre
+        +string escudo_url
+        +Enum estado_inscripcion
+        +crear_equipo(datos) EquipoModel
+        +obtener_por_id(id_equipo) EquipoModel
+        +obtener_por_torneo(id_torneo) List~EquipoModel~
+        +actualizar_estado(id_equipo, nuevo_estado) EquipoModel
+        +validar_minimo_jugadores(id_equipo) bool
+        +bloquear_plantilla(id_equipo)
+        +verificar_solvencia(id_equipo) bool
+        +obtener_estadisticas_actuales(id_equipo) FilaPosicionModel
+    }
+
+    class Jugador {
+        +int id
+        +int equipo_id
+        +string nombre_completo
+        +string identificacion
+        +date fecha_nacimiento
+        +int numero_camiseta
+        +string posicion
+        +bool estado_activo
+        +bool sancionado
+        +crear_jugador(datos) JugadorModel
+        +obtener_por_id(id_jugador) JugadorModel
+        +obtener_por_identificacion(id) JugadorModel
+        +obtener_por_equipo(id_equipo) List~JugadorModel~
+        +actualizar_estado_sancion(id_jugador, estado) JugadorModel
+        +validar_requisitos_edad(fecha_nac, categoria) bool
+        +verificar_elegibilidad(id_jugador) bool
+        +transferir_equipo(id_jugador, nuevo_equipo_id)
+    }
+
+    class Pago {
+        +int id
+        +int equipo_id
+        +float monto
+        +datetime fecha
+        +string metodo_pago
+        +string referencia_transaccion
+        +string comprobante_url
+        +Enum estado
+        +crear_pago(datos) PagoModel
+        +obtener_por_id(id_pago) PagoModel
+        +obtener_por_equipo(id_equipo) List~PagoModel~
+        +actualizar_estado(id_pago, nuevo_estado) PagoModel
+        +registrar_comprobante(id_equipo, datos)
+        +validar_pago(id_pago, aprobado, observaciones)
+    }
+
+    class Torneo {
+        +int id
+        +string nombre
+        +string categoria
+        +date fecha_inicio
+        +date fecha_fin
+        +Enum estado
+        +json reglas
+        +crear_torneo(datos) TorneoModel
+        +obtener_por_id(id_torneo) TorneoModel
+        +obtener_todos(estado_filtro) List~TorneoModel~
+        +actualizar_estado(id_torneo, nuevo_estado) TorneoModel
+        +iniciar_torneo(id_torneo)
+        +estructurar_fases(id_torneo, config_fases)
+        +finalizar_torneo(id_torneo)
+    }
+
+    class Fase {
+        +int id
+        +int torneo_id
+        +string nombre
+        +Enum tipo_formato
+        +Enum estado
+        +crear_fase(datos) FaseModel
+        +obtener_por_id(id_fase) FaseModel
+        +obtener_por_torneo(id_torneo) List~FaseModel~
+        +actualizar_estado(id_fase, nuevo_estado) FaseModel
+        +generar_fixture(id_fase)
+        +determinar_clasificados(id_fase) List~int~
+        +cerrar_fase(id_fase)
+    }
+
+    class Cancha {
+        +int id
+        +string nombre
+        +string direccion_sede
+        +string tipo_superficie
+        +bool estado_activo
+        +crear_cancha(datos) CanchaModel
+        +obtener_por_id(id_cancha) CanchaModel
+        +obtener_todas(solo_activas) List~CanchaModel~
+        +modificar_estado(id_cancha, activo) CanchaModel
+        +verificar_disponibilidad(id_cancha, fecha, hi, hf) bool
+        +obtener_agenda(id_cancha, fecha) List~PartidoModel~
+    }
+
+    class Partido {
+        +int id
+        +int fase_id
+        +int equipo_local_id
+        +int equipo_visitante_id
+        +int cancha_id
+        +int arbitro_id
+        +datetime fecha_hora
+        +Enum estado
+        +crear_partido(datos) PartidoModel
+        +obtener_por_id(id_partido) PartidoModel
+        +listar_por_fase(id_fase) List~PartidoModel~
+        +actualizar_estado(id_partido, nuevo_estado) PartidoModel
+        +programar_encuentro(datos)
+        +reprogramar_encuentro(id_partido, fecha, cancha)
+        +validar_alineaciones(id_partido) bool
+        +finalizar_encuentro(id_partido)
+    }
+
+    class Alineacion {
+        +int id
+        +int partido_id
+        +int equipo_id
+        +int jugador_id
+        +bool es_titular
+        +int numero_camiseta
+        +guardar_lista_jugadores(datos)
+        +obtener_por_partido_y_equipo(id_p, id_e) List~AlineacionModel~
+        +eliminar_planilla(id_partido, id_equipo)
+        +enviar_planilla_oficial(id_p, id_e, jugadores)
+        +validar_reglas_plantilla(jugadores) bool
+        +auditar_elegibilidad_jugadores(jugadores)
+    }
+
+    class Marcador {
+        +int id
+        +int partido_id
+        +int goles_local
+        +int goles_visitante
+        +int goles_penales_local
+        +int goles_penales_visitante
+        +bool es_resultado_final
+        +crear_marcador_inicial(id_partido) MarcadorModel
+        +obtener_por_partido(id_partido) MarcadorModel
+        +actualizar_goles(id_p, gl, gv) MarcadorModel
+        +fijar_resultado_final(id_partido) MarcadorModel
+        +registrar_anotacion(id_partido, id_equipo)
+        +aplicar_walkover(id_partido, id_equipo_ganador)
+        +validar_necesidad_desempate(id_partido) bool
+    }
+
+    class EventoPartido {
+        +int id
+        +int partido_id
+        +int equipo_id
+        +int jugador_id
+        +int jugador_secundario_id
+        +Enum tipo_evento
+        +int minuto_ocurrencia
+        +string comentarios
+        +crear_evento(datos) EventoPartidoModel
+        +obtener_por_partido(id_partido) List~EventoPartidoModel~
+        +obtener_por_jugador(id_jugador, id_torneo) List~EventoPartidoModel~
+        +eliminar_evento(id_evento)
+        +registrar_incidencia(datos)
+        +procesar_efecto_secundario(evento)
+        +validar_sustitucion(id_p, id_entra, id_sale)
+    }
+
+    class TablaPosiciones {
+        +int id
+        +int fase_id
+        +string nombre_grupo
+        +bool estado_cierre
+        +crear_tabla(datos) TablaPosicionesModel
+        +obtener_por_fase(id_fase) List~TablaPosicionesModel~
+        +obtener_por_id(id_tabla) TablaPosicionesModel
+        +actualizar_estado_cierre(id_tabla, cerrado) TablaPosicionesModel
+        +inicializar_grupos(id_fase, distribucion)
+        +calcular_clasificacion_actual(id_tabla) List~FilaPosicionModel~
+        +auditar_y_cerrar_grupo(id_tabla)
+    }
+
+    class FilaPosicion {
+        +int id
+        +int tabla_id
+        +int equipo_id
+        +int partidos_jugados
+        +int partidos_ganados
+        +int partidos_empatados
+        +int partidos_perdidos
+        +int goles_a_favor
+        +int goles_en_contra
+        +int diferencia_goles
+        +int puntos
+        +crear_fila_inicial(id_tabla, id_equipo) FilaPosicionModel
+        +obtener_por_tabla_y_equipo(id_t, id_e) FilaPosicionModel
+        +actualizar_metricas(id_fila, datos) FilaPosicionModel
+        +procesar_resultado_partido(id_t, id_e, gp, gr)
+        +revertir_resultado_partido(id_t, id_e, gp, gr)
+    }
+
+    Administrador --|> Usuario
+    Entrenador --|> Usuario
+    Arbitro --|> Usuario
+
+    Torneo "1" *-- "N" Fase
+    Fase "1" *-- "N" TablaPosiciones
+    TablaPosiciones "1" *-- "N" FilaPosicion
+    Partido "1" *-- "1" Marcador
+    Partido "1" *-- "N" EventoPartido
+    Equipo "1" *-- "N" Jugador
+
+    Colegio "1" --> "N" Equipo
+    Entrenador "1" --> "N" Equipo
+    Torneo "1" --> "N" Equipo
+    Cancha "1" --> "N" Partido
+    Arbitro "1" --> "N" Partido
+    Fase "1" --> "N" Partido
+    Equipo "1" --> "N" Pago
+    Partido "1" --> "N" Alineacion
+    Equipo "1" --> "N" EventoPartido
+    Jugador "1" --> "N" EventoPartido
+    Equipo "1" --> "N" FilaPosicion
+</pre>
+  </div>
+</main>
+<footer>
+  Basado en el documento de clases del proyecto Torneo Colegial. <code>Enum</code> representa los campos con valores fijos definidos en <code>core/enums.py</code> (rol, estados, tipo de evento, etc). Las flechas <code>*--</code> son composición (el hijo se elimina si el padre se elimina) y <code>--></code> son asociaciones por llave foránea.
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  function currentTheme() {
+    var attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'dark') return 'dark';
+    if (attr === 'light') return 'default';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default';
+  }
+  mermaid.initialize({ startOnLoad: true, theme: currentTheme(), securityLevel: 'loose' });
+</script>
+</body>
+</html>
