@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi import Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from app.schemas.jugador_schema import JugadorCreate, JugadorResponse
 from app.routers import jugador_router
@@ -24,6 +25,8 @@ app.add_middleware(
 
 app.include_router(jugador_router.router)
 
-
+@app.get("/diagrama")
+def ver_diagrama():
+  return FileResponse("../frontend/diagrama.html")
 
 app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
