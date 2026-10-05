@@ -10,3 +10,4 @@ python-dotenv
 passlib[bcrypt]
 pyjwt
 pg8000
+pydantic[email]

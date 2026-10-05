@@ -3,8 +3,7 @@ from fastapi import Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from app.schemas.jugador_schema import JugadorCreate, JugadorResponse
-from app.routers import jugador_router
+from app.routers import usuario_router
 
 app = FastAPI(
     title="API Torneo Colegial",
@@ -22,8 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-app.include_router(jugador_router.router)
+app.include_router(usuario_router.router)
 
 @app.get("/diagrama")
 def ver_diagrama():
