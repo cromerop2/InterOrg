@@ -1,0 +1,257 @@
+# 
+# USUARIO
+#
+
+sequenceDiagram
+    actor User as Usuario
+    participant API as FastAPI (Router)
+    participant DI as Inyección de Dependencias
+    participant Service as UsuarioService
+    participant Repo as UsuarioRepository
+    participant DB as PostgreSQL (Supabase)
+
+    User->>API: POST /auth/login (JSON: email, password)
+    activate API
+
+    Note over API: Validación automática Pydantic
+    API->>API: Valida esquema de entrada (LoginRequest)
+
+    API->>DI: Depende de get_usuario_service()
+    activate DI
+    DI->>DB: get_db() (Abre sesión SQL)
+    DI->>Repo: Instancia UsuarioRepository(db)
+    DI->>Service: Instancia UsuarioService(repository)
+    DI-->>API: Entrega UsuarioService listo
+    deactivate DI
+
+    API->>Service: autenticar_usuario(email, password_plana)
+    activate Service
+
+    Service->>Repo: obtener_por_email(email)
+    activate Repo
+    Repo->>DB: SELECT * FROM usuarios WHERE email = email
+    activate DB
+    DB-->>Repo: Retorna UsuarioModel
+    deactivate DB
+    Repo-->>Service: Retorna UsuarioModel
+    deactivate Repo
+
+    Note over Service: Verifica contraseña y estado_activo
+    Service->>Service: verificar_hash(password_plana, password_hash)
+
+    alt Credenciales válidas y cuenta activa
+        Service->>Service: firmar_token_jwt(usuario.id, usuario.rol)
+        Service-->>API: Retorna token JWT
+        API-->>User: HTTP 200 OK (JSON: token, rol)
+    else Credenciales inválidas o cuenta inactiva
+        Service-->>API: Lanza excepción (credenciales inválidas)
+        API-->>User: HTTP 401 Unauthorized
+    end
+    deactivate Service
+    deactivate API
+
+
+#
+# ADMIN
+#
+
+sequenceDiagram
+    actor Admin as Administrador
+    participant API as FastAPI (Router)
+    participant DI as Inyección de Dependencias
+    participant Service as EquipoService
+    participant PagoRepo as PagoRepository
+    participant EquipoRepo as EquipoRepository
+    participant DB as PostgreSQL (Supabase)
+
+    Admin->>API: PATCH /equipos/{id}/auditar (JSON: id_pago)
+    activate API
+
+    Note over API: Requiere rol Administrador
+    API->>API: verificar_permisos(token, ["Administrador"])
+
+    API->>DI: Depende de get_equipo_service()
+    activate DI
+    DI->>DB: get_db() (Abre sesión SQL)
+    DI->>PagoRepo: Instancia PagoRepository(db)
+    DI->>EquipoRepo: Instancia EquipoRepository(db)
+    DI->>Service: Instancia EquipoService(pago_repo, equipo_repo)
+    DI-->>API: Entrega EquipoService listo
+    deactivate DI
+
+    API->>Service: auditar_inscripcion_equipo(id_equipo, id_pago)
+    activate Service
+
+    Service->>PagoRepo: obtener_por_id(id_pago)
+    activate PagoRepo
+    PagoRepo->>DB: SELECT * FROM pagos WHERE id = id_pago
+    activate DB
+    DB-->>PagoRepo: Retorna PagoModel (estado="Pendiente")
+    deactivate DB
+    PagoRepo-->>Service: Retorna PagoModel
+    deactivate PagoRepo
+
+    Note over Service: Valida comprobante y mínimo de jugadores
+    Service->>EquipoRepo: obtener_por_id(id_equipo)
+    activate EquipoRepo
+    EquipoRepo->>DB: SELECT * FROM equipos WHERE id = id_equipo
+    activate DB
+    DB-->>EquipoRepo: Retorna EquipoModel
+    deactivate DB
+    EquipoRepo-->>Service: Retorna EquipoModel
+    deactivate EquipoRepo
+
+    Service->>Service: validar_minimo_jugadores(id_equipo)
+
+    alt Pago válido y plantilla completa
+        Service->>PagoRepo: actualizar_estado(id_pago, "Aprobado")
+        activate PagoRepo
+        PagoRepo->>DB: UPDATE pagos SET estado='Aprobado'
+        deactivate PagoRepo
+        Service->>EquipoRepo: actualizar_estado(id_equipo, "Habilitado")
+        activate EquipoRepo
+        EquipoRepo->>DB: UPDATE equipos SET estado_inscripcion='Habilitado'
+        deactivate EquipoRepo
+        Service-->>API: Retorna EquipoModel actualizado
+        API-->>Admin: HTTP 200 OK (equipo Habilitado)
+    else Pago inválido o plantilla incompleta
+        Service-->>API: Lanza excepción (requisitos no cumplidos)
+        API-->>Admin: HTTP 400 Bad Request
+    end
+    deactivate Service
+    deactivate API
+
+
+
+#
+# ENTRENADOR
+#
+
+sequenceDiagram
+    actor Coach as Entrenador
+    participant API as FastAPI (Router)
+    participant DI as Inyección de Dependencias
+    participant Service as AlineacionService
+    participant JugRepo as JugadorRepository
+    participant AlinRepo as AlineacionRepository
+    participant DB as PostgreSQL (Supabase)
+
+    Coach->>API: POST /partidos/{id}/alineacion (JSON: lista_jugadores)
+    activate API
+
+    Note over API: Requiere rol Entrenador
+    API->>API: verificar_permisos(token, ["Entrenador"])
+    API->>API: Valida esquema (List[AlineacionCreate])
+
+    API->>DI: Depende de get_alineacion_service()
+    activate DI
+    DI->>DB: get_db() (Abre sesión SQL)
+    DI->>JugRepo: Instancia JugadorRepository(db)
+    DI->>AlinRepo: Instancia AlineacionRepository(db)
+    DI->>Service: Instancia AlineacionService(jug_repo, alin_repo)
+    DI-->>API: Entrega AlineacionService listo
+    deactivate DI
+
+    API->>Service: enviar_planilla_oficial(id_partido, id_equipo, jugadores)
+    activate Service
+
+    Note over Service: Reglas de la plantilla
+    Service->>Service: validar_reglas_plantilla(jugadores)
+
+    loop Por cada jugador convocado
+        Service->>JugRepo: obtener_por_id(id_jugador)
+        activate JugRepo
+        JugRepo->>DB: SELECT * FROM jugadores WHERE id = id_jugador
+        JugRepo-->>Service: Retorna JugadorModel
+        deactivate JugRepo
+        Service->>Service: verificar_elegibilidad(jugador)
+    end
+
+    alt Todos los jugadores son elegibles
+        Service->>AlinRepo: guardar_lista_jugadores(alineacion)
+        activate AlinRepo
+        AlinRepo->>DB: INSERT masivo en alineaciones
+        activate DB
+        DB-->>AlinRepo: Confirma inserción
+        deactivate DB
+        AlinRepo-->>Service: Retorna List~AlineacionModel~
+        deactivate AlinRepo
+        Service-->>API: Retorna planilla guardada
+        API-->>Coach: HTTP 201 Created (planilla registrada)
+    else Hay jugador inactivo o sancionado
+        Service-->>API: Lanza excepción (jugador inhabilitado)
+        API-->>Coach: HTTP 400 Bad Request
+    end
+    deactivate Service
+    deactivate API
+
+
+
+
+#
+# ÁRBITRO
+#
+
+sequenceDiagram
+    actor Ref as Árbitro
+    participant API as FastAPI (Router)
+    participant DI as Inyección de Dependencias
+    participant EventoService as EventoPartidoService
+    participant AlinRepo as AlineacionRepository
+    participant EventoRepo as EventoPartidoRepository
+    participant MarcadorService as MarcadorService
+    participant DB as PostgreSQL (Supabase)
+
+    Ref->>API: POST /partidos/{id}/eventos (JSON: EventoPartidoCreate)
+    activate API
+
+    Note over API: Requiere rol Árbitro y partido asignado
+    API->>API: verificar_permisos(token, ["Arbitro"])
+    API->>API: Valida esquema de entrada
+
+    API->>DI: Depende de get_evento_service()
+    activate DI
+    DI->>DB: get_db() (Abre sesión SQL)
+    DI->>AlinRepo: Instancia AlineacionRepository(db)
+    DI->>EventoRepo: Instancia EventoPartidoRepository(db)
+    DI->>EventoService: Instancia EventoPartidoService(alin_repo, evento_repo)
+    DI-->>API: Entrega EventoPartidoService listo
+    deactivate DI
+
+    API->>EventoService: registrar_incidencia(datos_evento)
+    activate EventoService
+
+    EventoService->>AlinRepo: obtener_por_partido_y_equipo(id_partido, id_equipo)
+    activate AlinRepo
+    AlinRepo->>DB: SELECT * FROM alineaciones WHERE ...
+    activate DB
+    DB-->>AlinRepo: Retorna List~AlineacionModel~
+    deactivate DB
+    AlinRepo-->>EventoService: Retorna alineación oficial
+    deactivate AlinRepo
+
+    alt Jugador está en la alineación oficial
+        EventoService->>EventoRepo: crear_evento(datos_evento)
+        activate EventoRepo
+        EventoRepo->>DB: INSERT INTO eventos_partido
+        activate DB
+        DB-->>EventoRepo: Retorna EventoPartidoModel
+        deactivate DB
+        EventoRepo-->>EventoService: Retorna EventoPartidoModel
+        deactivate EventoRepo
+
+        Note over EventoService,MarcadorService: Efecto secundario (trigger)
+        EventoService->>MarcadorService: procesar_efecto_secundario(evento)
+        activate MarcadorService
+        MarcadorService->>MarcadorService: registrar_anotacion(id_partido, id_equipo)
+        MarcadorService->>DB: UPDATE marcadores SET goles_local/goles_visitante
+        deactivate MarcadorService
+
+        EventoService-->>API: Retorna EventoPartidoModel
+        API-->>Ref: HTTP 201 Created (evento + marcador actualizado)
+    else Jugador no convocado
+        EventoService-->>API: Lanza excepción (jugador no está en alineación)
+        API-->>Ref: HTTP 400 Bad Request
+    end
+    deactivate EventoService
+    deactivate API
