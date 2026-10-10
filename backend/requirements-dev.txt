@@ -1,0 +1,5 @@
+# Incluye las dependencias necesarias para ejecutar el backend.
+-r requirements.txt
+# Cliente HTTP para TestClient de FastAPI y las pruebas contra Uvicorn.
+# Se utiliza en las pruebas; la implementación de Colegio no lo importa.
+httpx
