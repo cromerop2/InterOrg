@@ -1,0 +1,12 @@
+{
+  "name": "torneo-colegial-integration-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pruebas de navegador de la web y de la app contra una API temporal",
+  "scripts": {
+    "test:browser": "node tests/browser.e2e.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

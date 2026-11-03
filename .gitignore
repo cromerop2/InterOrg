@@ -31,3 +31,10 @@ Thumbs.db
 *.log
 *.sqlite3
 *.db
+
+# Dependencias y salidas de las aplicaciones JavaScript
+node_modules/
+.expo/
+mobile/dist/
+test-results/
+playwright-report/
