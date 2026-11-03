@@ -7,6 +7,7 @@ from app.database import get_db
 from app.repositories.colegio_repository import ColegioRepository
 from app.schemas.colegio_schema import ColegioCreate, ColegioResponse, ColegioUpdate
 from app.services.colegio_service import ColegioService
+from app.core.security import exigir_administrador
 
 
 # Todas las rutas empiezan por /colegios y aparecen bajo Colegios en Swagger.
@@ -20,7 +21,7 @@ def get_colegio_service(db: Session = Depends(get_db)) -> ColegioService:
 
 
 # response_model define los campos de salida; 201 indica creación exitosa.
-@router.post("/", response_model=ColegioResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ColegioResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(exigir_administrador)])
 def crear_colegio(
     datos_colegio: ColegioCreate,
     service: ColegioService = Depends(get_colegio_service),
@@ -47,7 +48,7 @@ def obtener_por_id(
     return service.obtener_por_id(id_colegio)
 
 
-@router.patch("/{id_colegio}", response_model=ColegioResponse)
+@router.patch("/{id_colegio}", response_model=ColegioResponse, dependencies=[Depends(exigir_administrador)])
 def actualizar_detalles(
     datos: ColegioUpdate,
     id_colegio: int = Path(..., gt=0),

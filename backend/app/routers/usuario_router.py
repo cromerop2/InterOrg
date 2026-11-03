@@ -5,8 +5,11 @@ from app.services.usuario_service import UsuarioService
 from app.database import get_db  # Dependencia que abre y cierra la sesión de la BD
 from app.repositories.usuario_repository import UsuarioRepository
 from app.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
+from app.core.security import exigir_administrador
+from sqlalchemy.exc import IntegrityError
 
-router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
+# Impide que un visitante se registre a sí mismo con el rol Administrador.
+router = APIRouter(prefix="/usuarios", tags=["Usuarios"], dependencies=[Depends(exigir_administrador)])
 
 def get_usuario_service(db: Session = Depends(get_db)) -> UsuarioService:
     repository = UsuarioRepository(db)
@@ -29,7 +32,10 @@ def crear_usuario(usuario_data: UsuarioCreate, db: Session = Depends(get_db)):
         )
 
     # Creamos el usuario a través del repositorio
-    nuevo_usuario = repositorio.crear(usuario_data)
+    try:
+        nuevo_usuario = repositorio.crear(usuario_data)
+    except IntegrityError as error:
+        raise HTTPException(409, "Correo o número de colegiado ya registrado.") from error
     return nuevo_usuario
 
 

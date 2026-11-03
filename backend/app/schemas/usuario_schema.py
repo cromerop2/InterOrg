@@ -5,13 +5,18 @@ from app.core.enums import RolEnum
 
 # 1. Esquema Base de Usuario
 class UsuarioBase(BaseModel):
-    nombre_completo: str = Field(..., example="Carlos Romero")
+    nombre_completo: str = Field(..., min_length=1, example="Carlos Romero")
     email: EmailStr = Field(..., example="carlos.romero@universidad.edu.co")
-    telefono_contacto: str = Field(None, example="3001234567")
+    telefono_contacto: str = Field(..., min_length=1, example="3001234567")
     rol: RolEnum = Field(..., example=RolEnum.ADMINISTRADOR)
 
 class UsuarioCreate(UsuarioBase):
-    password: str = Field(..., min_length=6, example="segura12345")
+    password: str = Field(..., min_length=8, max_length=1024, example="segura12345")
+    # El administrador puede proporcionar los atributos específicos de cada rol.
+    nivel_acceso: str = Field(default="Total", min_length=1)
+    numero_colegiado: str | None = Field(default=None, min_length=1)
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
 
 # 2. Esquema específico para Administrador
 class AdministradorCreate(UsuarioCreate):

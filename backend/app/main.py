@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 # Importa los grupos de endpoints que se registran en la aplicación.
-from app.routers import colegio_router, usuario_router
+from app.routers import colegio_router, usuario_router, auth_router, equipo_router, campeonato_router
+from pathlib import Path
 
 app = FastAPI(
     title="API Torneo Colegial",
@@ -25,9 +26,14 @@ app.add_middleware(
 app.include_router(usuario_router.router)
 # Registra /colegios antes del frontend para que FastAPI atienda estas rutas.
 app.include_router(colegio_router.router)
+app.include_router(auth_router.router)
+app.include_router(equipo_router.router)
+app.include_router(campeonato_router.router)
+
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 
 @app.get("/diagrama")
 def ver_diagrama():
-  return FileResponse("../frontend/diagrama.html")
+  return FileResponse(FRONTEND_DIR / "diagrama.html")
 
-app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

@@ -26,6 +26,7 @@ from app.main import app
 from app.models.colegio_model import ColegioModel
 from app.repositories.colegio_repository import ColegioRepository
 from app.schemas.colegio_schema import ColegioCreate, ColegioUpdate
+from app.core.security import exigir_administrador
 
 
 class ColegioAPITest(unittest.TestCase):
@@ -48,6 +49,8 @@ class ColegioAPITest(unittest.TestCase):
 
         # Sustituye solo la conexión: router, servicio y repositorio son reales.
         app.dependency_overrides[get_db] = db_temporal
+        # Estos casos prueban Colegio; los permisos se prueban en test_campeonato.
+        app.dependency_overrides[exigir_administrador] = lambda: None
         # TestClient envía peticiones a la app sin abrir un puerto de red.
         self.client = TestClient(app)
         self.datos = {
@@ -214,9 +217,18 @@ from pathlib import Path
 import threading
 import time
 import uvicorn
-from app.database import engine
+from app.database import engine, Base, SessionLocal
 from app.models.colegio_model import ColegioModel
-ColegioModel.__table__.create(bind=engine, checkfirst=True)
+from app.models.usuario_model import AdministradorModel
+from app.core.enums import RolEnum
+from app.core.security import hash_password
+Base.metadata.create_all(bind=engine, checkfirst=True)
+with SessionLocal() as db:
+    if db.query(AdministradorModel).first() is None:
+        db.add(AdministradorModel(nombre_completo='Admin prueba', email='admin@example.com',
+            telefono_contacto='3001234567', rol=RolEnum.ADMINISTRADOR,
+            password_hash=hash_password('ClavePrueba123')))
+        db.commit()
 servidor = uvicorn.Server(uvicorn.Config('app.main:app', host='127.0.0.1', port={puerto}))
 def esperar_cierre():
     while not Path({str(detener)!r}).exists():
@@ -254,6 +266,10 @@ finally:
                         except httpx.TransportError:
                             pass
                         time.sleep(0.1)
+                    # Autenticación real del administrador en el servidor de prueba.
+                    login = cliente.post("/auth/login", json={"email": "admin@example.com", "password": "ClavePrueba123"})
+                    self.assertEqual(login.status_code, 200, login.text)
+                    cliente.headers["Authorization"] = "Bearer " + login.json()["access_token"]
                     # Entrega el cliente al bloque with de la prueba.
                     yield cliente
             finally:
