@@ -94,3 +94,13 @@ API Base: http://127.0.0.1:8000
 Documentación Interactiva (Swagger UI): http://127.0.0.1:8000/docs
 
 Documentación Alternativa (Redoc): http://127.0.0.1:8000/redoc
+## Autenticación y usuarios
+
+1. Configura `backend/.env` a partir de `.env.example` (`DATABASE_URL` y `SECRET_KEY`).
+2. Crea el primer administrador (solo una vez, desde `backend`): `python scripts/crear_admin.py`
+3. Inicia sesión con `POST /auth/login` (JSON `email` y `password`); devuelve `access_token` y `rol`.
+4. Envía el token en cada petición protegida: `Authorization: Bearer <access_token>`. En `/docs`, botón **Authorize**.
+5. Solo un Administrador crea cuentas (`POST /usuarios/`) y las suspende (`PATCH /usuarios/{id}/estado`).
+
+Para proteger una ruta nueva: `Depends(requerir_roles(RolEnum.ENTRENADOR))` (ver `app/core/dependencies.py`).
+Si tu base de datos ya existía antes de la Fase 1, ejecuta `database/migraciones/001_fase1_usuarios.sql`.

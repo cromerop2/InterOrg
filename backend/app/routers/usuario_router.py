@@ -1,60 +1,56 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+"""Endpoints de gestión de usuarios (cuentas de Administrador, Entrenador y Árbitro)."""
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+
+from app.core.dependencies import get_usuario_service, obtener_usuario_actual, requerir_roles
+from app.core.enums import RolEnum
+from app.models.usuario_model import UsuarioModel
+from app.schemas.usuario_schema import UsuarioCreate, UsuarioEstadoUpdate, UsuarioResponse
 from app.services.usuario_service import UsuarioService
-from app.database import get_db  # Dependencia que abre y cierra la sesión de la BD
-from app.repositories.usuario_repository import UsuarioRepository
-from app.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
-def get_usuario_service(db: Session = Depends(get_db)) -> UsuarioService:
-    repository = UsuarioRepository(db)
-    return UsuarioService(repository)
-
-@router.post("/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
-def crear_usuario(usuario_data: UsuarioCreate, db: Session = Depends(get_db)):
-    """
-    Crea un nuevo usuario en el sistema. 
-    Automáticamente detectará si es Administrador, Entrenador o Árbitro según el rol enviado.
-    """
-    repositorio = UsuarioRepository(db)
-
-    # Validamos opcionalmente si el correo ya está registrado
-    usuario_existente = repositorio.obtener_por_email(usuario_data.email)
-    if usuario_existente:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo electrónico ya se encuentra registrado."
-        )
-
-    # Creamos el usuario a través del repositorio
-    nuevo_usuario = repositorio.crear(usuario_data)
-    return nuevo_usuario
+solo_admin = Depends(requerir_roles(RolEnum.ADMINISTRADOR))
 
 
-@router.get("/", response_model=List[UsuarioResponse])
-def obtener_usuarios(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """
-    Obtiene una lista paginada de todos los usuarios registrados en el sistema.
-    """
-    repositorio = UsuarioRepository(db)
-    usuarios = repositorio.obtener_todos(skip=skip, limit=limit)
-    return usuarios
+@router.post(
+    "/",
+    response_model=UsuarioResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[solo_admin],
+)
+def registrar_usuario(datos: UsuarioCreate, servicio: UsuarioService = Depends(get_usuario_service)):
+    """Solo un Administrador crea cuentas. El primer administrador se crea con scripts/crear_admin.py."""
+    return servicio.registrar_usuario(datos)
+
+
+@router.get("/", response_model=list[UsuarioResponse], dependencies=[solo_admin])
+def listar_usuarios(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    servicio: UsuarioService = Depends(get_usuario_service),
+):
+    return servicio.listar_usuarios(skip, limit)
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
-def obtener_usuario_por_id(usuario_id: int, db: Session = Depends(get_db)):
-    """
-    Busca y devuelve un usuario específico filtrado por su ID único.
-    """
-    repositorio = UsuarioRepository(db)
-    usuario = repositorio.obtener_por_id(usuario_id)
-    
-    if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="El usuario solicitado no existe."
-        )
-        
-    return usuario
+def obtener_usuario(
+    usuario_id: int = Path(gt=0),
+    actual: UsuarioModel = Depends(obtener_usuario_actual),
+    servicio: UsuarioService = Depends(get_usuario_service),
+):
+    """Un Administrador ve a cualquiera; los demás roles solo su propia cuenta."""
+    if actual.rol != RolEnum.ADMINISTRADOR and actual.id != usuario_id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "No tienes permisos para esta acción.")
+    return servicio.obtener_usuario(usuario_id)
+
+
+@router.patch("/{usuario_id}/estado", response_model=UsuarioResponse)
+def modificar_estado(
+    datos: UsuarioEstadoUpdate,
+    usuario_id: int = Path(gt=0),
+    actual: UsuarioModel = Depends(requerir_roles(RolEnum.ADMINISTRADOR)),
+    servicio: UsuarioService = Depends(get_usuario_service),
+):
+    """Suspende o habilita una cuenta sin borrar su historial."""
+    return servicio.modificar_estado(usuario_id, datos.estado_activo, actual.id)

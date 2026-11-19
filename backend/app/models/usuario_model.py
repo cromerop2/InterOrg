@@ -39,7 +39,7 @@ class EntrenadorModel(UsuarioModel):
     __tablename__ = "entrenadores"
 
     id = Column(Integer, ForeignKey("usuarios.id"), primary_key=True)
-    #colegio_id = Column(Integer, ForeignKey("colegios.id"), nullable=True)
+    colegio_id = Column(Integer, ForeignKey("colegios.id"), nullable=True)
 
     # Relación con equipos a su cargo
     #equipos = relationship("EquipoModel", back_populates="entrenador")
@@ -53,7 +53,7 @@ class ArbitroModel(UsuarioModel):
     __tablename__ = "arbitros"
 
     id = Column(Integer, ForeignKey("usuarios.id"), primary_key=True)
-    numero_colegiado = Column(String, unique=True, nullable=False)
+    numero_colegiado = Column(String, unique=True, nullable=True)  # opcional; varios NULL no chocan con unique
 
     __mapper_args__ = {
         "polymorphic_identity": RolEnum.ARBITRO,

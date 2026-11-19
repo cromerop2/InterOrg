@@ -1,0 +1,64 @@
+"""Dependencias compartidas de FastAPI: servicios, usuario autenticado y control de roles."""
+
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
+
+from app.core.enums import RolEnum
+from app.core.security import decodificar_token
+from app.database import get_db
+from app.models.usuario_model import UsuarioModel
+from app.repositories.colegio_repository import ColegioRepository
+from app.repositories.usuario_repository import UsuarioRepository
+from app.services.usuario_service import UsuarioService
+
+# auto_error=False: la falta de token se responde con nuestro propio 401.
+esquema_bearer = HTTPBearer(auto_error=False, description="Pega aquí el access_token de /auth/login")
+
+
+def _no_autenticado() -> HTTPException:
+    return HTTPException(
+        status.HTTP_401_UNAUTHORIZED,
+        "No autenticado o sesión inválida.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def get_usuario_service(db: Session = Depends(get_db)) -> UsuarioService:
+    return UsuarioService(UsuarioRepository(db), ColegioRepository(db))
+
+
+def obtener_usuario_actual(
+    credenciales: HTTPAuthorizationCredentials | None = Depends(esquema_bearer),
+    db: Session = Depends(get_db),
+) -> UsuarioModel:
+    """Lee el JWT de la cabecera Authorization y devuelve el usuario (activo) al que pertenece."""
+    if credenciales is None:
+        raise _no_autenticado()
+    try:
+        payload = decodificar_token(credenciales.credentials)
+        id_usuario = int(payload["sub"])
+    except (jwt.PyJWTError, KeyError, ValueError):
+        raise _no_autenticado()
+
+    # Se consulta la BD en cada petición: si la cuenta se suspende, el token deja de servir al instante.
+    usuario = UsuarioRepository(db).obtener_por_id(id_usuario)
+    if usuario is None or not usuario.estado_activo:
+        raise _no_autenticado()
+    return usuario
+
+
+def requerir_roles(*roles_permitidos: RolEnum):
+    """Fábrica de dependencias: exige sesión válida y que el rol del usuario esté permitido.
+
+    Uso:  usuario: UsuarioModel = Depends(requerir_roles(RolEnum.ADMINISTRADOR))
+    """
+
+    def dependencia(usuario: UsuarioModel = Depends(obtener_usuario_actual)) -> UsuarioModel:
+        # El rol se toma de la BD, no del token, para que un cambio de rol aplique de inmediato.
+        if usuario.rol not in roles_permitidos:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "No tienes permisos para esta acción.")
+        return usuario
+
+    return dependencia

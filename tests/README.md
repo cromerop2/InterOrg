@@ -24,3 +24,7 @@ Verificación del 10 de octubre de 2026: **11 pruebas aprobadas**.
 - Aplicar la restricción única en la BD y recuperar la sesión después de un conflicto.
 - Arrancar Uvicorn, acceder a Swagger y ejecutar las cuatro operaciones por HTTP real.
 - Reiniciar el servidor y comprobar que los datos siguen guardados.
+
+## Pruebas de usuarios y seguridad
+
+`python -m unittest discover -s ../tests -p "test_usuario.py" -v` (desde `backend`). Usan SQLite en memoria.
