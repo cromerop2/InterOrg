@@ -11,6 +11,8 @@ import unittest
 
 # Se configura antes de importar app para evitar usar la BD indicada en .env.
 os.environ["DATABASE_URL"] = "sqlite://"
+# La configuración exige SECRET_KEY; esta es solo para pruebas.
+os.environ.setdefault("SECRET_KEY", "clave-solo-para-pruebas-0123456789-abcdef")
 # Permite importar el paquete app desde este archivo ubicado en tests.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 

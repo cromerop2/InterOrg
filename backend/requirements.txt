@@ -1,13 +1,11 @@
 fastapi
 uvicorn[standard]
 sqlalchemy
-psycopg
-psycopg[binary]
-psycopg2-binary
+# Driver de PostgreSQL (URL: postgresql+pg8000://...). Es el único driver necesario.
+pg8000
 pydantic
 pydantic-settings
-python-dotenv
-passlib[bcrypt]
-pyjwt
-pg8000
 pydantic[email]
+python-dotenv
+bcrypt
+pyjwt

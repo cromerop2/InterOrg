@@ -21,9 +21,10 @@ class EstadoFaseEnum(str, enum.Enum):
     FINALIZADA = "Finalizada"
 
 class EstadoInscripcionEnum(str, enum.Enum):
-    PENDIENTE = "Pendiente"
+    PREINSCRITO = "Preinscrito"
+    PAGO_PENDIENTE = "Pago_Pendiente"
     HABILITADO = "Habilitado"
-    RECHAZADO = "Rechazado"
+    DESCALIFICADO = "Descalificado"
 
 class EstadoPagoEnum(str, enum.Enum):
     PENDIENTE = "Pendiente"
