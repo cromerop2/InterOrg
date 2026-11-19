@@ -23,11 +23,16 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import get_db
+from app.database import Base, get_db
 from app.main import app
 from app.models.colegio_model import ColegioModel
 from app.repositories.colegio_repository import ColegioRepository
+from app.repositories.usuario_repository import UsuarioRepository
 from app.schemas.colegio_schema import ColegioCreate, ColegioUpdate
+from app.schemas.usuario_schema import AdministradorCreate, EntrenadorCreate
+from app.services.usuario_service import UsuarioService
+
+CLAVE = "Clave-segura-123"
 
 
 class ColegioAPITest(unittest.TestCase):
@@ -40,7 +45,8 @@ class ColegioAPITest(unittest.TestCase):
         self.engine = create_engine(
             "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
         )
-        ColegioModel.__table__.create(self.engine)
+        # Las rutas exigen sesión, así que también se necesitan las tablas de usuarios.
+        Base.metadata.create_all(self.engine)
         self.sessions = sessionmaker(bind=self.engine)
 
         def db_temporal():
@@ -52,6 +58,9 @@ class ColegioAPITest(unittest.TestCase):
         app.dependency_overrides[get_db] = db_temporal
         # TestClient envía peticiones a la app sin abrir un puerto de red.
         self.client = TestClient(app)
+        # Todas las pruebas de abajo actúan como Administrador, salvo las de permisos.
+        self.crear_usuario(AdministradorCreate, "Administrador", "admin@torneo.edu.co")
+        self.client.headers.update(self.cabecera("admin@torneo.edu.co"))
         self.datos = {
             "nombre": "Colegio San José",
             "direccion": "Calle 10 # 20-30",
@@ -64,6 +73,35 @@ class ColegioAPITest(unittest.TestCase):
         self.client.close()
         app.dependency_overrides.clear()
         self.engine.dispose()
+
+    def crear_usuario(self, esquema, rol, email):
+        with self.sessions() as db:
+            servicio = UsuarioService(UsuarioRepository(db), ColegioRepository(db))
+            servicio.registrar_usuario(
+                esquema(rol=rol, nombre_completo="Prueba", email=email,
+                        telefono_contacto="3000000000", password=CLAVE)
+            )
+
+    def cabecera(self, email):
+        r = self.client.post("/auth/login", json={"email": email, "password": CLAVE})
+        self.assertEqual(r.status_code, 200, r.text)
+        return {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+    def test_permisos_por_rol(self):
+        """Sin sesión: 401. Entrenador: puede consultar, pero no crear ni modificar."""
+        colegio = self.crear()
+        ruta = f"/colegios/{colegio['id']}"
+        anonimo = TestClient(app)  # cliente sin cabecera Authorization
+        self.assertEqual(anonimo.get("/colegios/").status_code, 401)
+        self.assertEqual(anonimo.post("/colegios/", json=self.datos).status_code, 401)
+
+        self.crear_usuario(EntrenadorCreate, "Entrenador", "ent@torneo.edu.co")
+        h = self.cabecera("ent@torneo.edu.co")
+        self.assertEqual(anonimo.get(ruta, headers=h).status_code, 200)
+        self.assertEqual(anonimo.get("/colegios/", headers=h).status_code, 200)
+        self.assertEqual(anonimo.post("/colegios/", json=self.datos, headers=h).status_code, 403)
+        self.assertEqual(anonimo.patch(ruta, json={"direccion": "X"}, headers=h).status_code, 403)
+        anonimo.close()
 
     def crear(self, **cambios):
         """Crea un colegio de ejemplo, con los cambios que necesite cada caso."""
@@ -216,9 +254,18 @@ from pathlib import Path
 import threading
 import time
 import uvicorn
-from app.database import engine
-from app.models.colegio_model import ColegioModel
-ColegioModel.__table__.create(bind=engine, checkfirst=True)
+from app import models
+from app.database import Base, SessionLocal, engine
+from app.repositories.colegio_repository import ColegioRepository
+from app.repositories.usuario_repository import UsuarioRepository
+from app.schemas.usuario_schema import AdministradorCreate
+from app.services.usuario_service import UsuarioService
+Base.metadata.create_all(bind=engine)
+with SessionLocal() as db:
+    servicio = UsuarioService(UsuarioRepository(db), ColegioRepository(db))
+    if servicio.repository.obtener_por_email('admin@torneo.edu.co') is None:
+        servicio.registrar_usuario(AdministradorCreate(rol='Administrador', nombre_completo='Admin',
+            email='admin@torneo.edu.co', telefono_contacto='3000000000', password='Clave-segura-123'))
 servidor = uvicorn.Server(uvicorn.Config('app.main:app', host='127.0.0.1', port={puerto}))
 def esperar_cierre():
     while not Path({str(detener)!r}).exists():
@@ -268,6 +315,12 @@ finally:
                     proceso.kill()
                     proceso.wait(timeout=5)
 
+    def iniciar_sesion(self, cliente):
+        """Inicia sesión como el administrador sembrado y deja el token en el cliente."""
+        r = cliente.post("/auth/login", json={"email": "admin@torneo.edu.co", "password": CLAVE})
+        self.assertEqual(r.status_code, 200, r.text)
+        cliente.headers["Authorization"] = "Bearer " + r.json()["access_token"]
+
     def test_http_real_y_persistencia_tras_reiniciar(self):
         """Valida rutas, errores y conservación de datos tras reiniciar Uvicorn."""
         # La carpeta y la BD se eliminan automáticamente al salir del bloque.
@@ -277,6 +330,8 @@ finally:
             with self.servidor(carpeta) as cliente:
                 self.assertEqual(cliente.get("/docs").status_code, 200)
                 self.assertEqual(cliente.get("/").status_code, 200)
+                self.assertEqual(cliente.get("/colegios/").status_code, 401)  # sin sesión
+                self.iniciar_sesion(cliente)
                 paths = cliente.get("/openapi.json").json()["paths"]
                 self.assertTrue({"get", "post"}.issubset(paths["/colegios/"]))
                 self.assertTrue({"get", "patch"}.issubset(paths["/colegios/{id_colegio}"]))
@@ -303,6 +358,7 @@ finally:
                 self.assertEqual(cliente.get("/colegios/?activos_solamente=false").json(), [actualizado])
             # Segunda ejecución: abre la misma BD y verifica los datos guardados.
             with self.servidor(carpeta) as cliente:
+                self.iniciar_sesion(cliente)
                 respuesta = cliente.get(ruta)
                 self.assertEqual(respuesta.status_code, 200)
                 self.assertEqual(respuesta.json(), actualizado)

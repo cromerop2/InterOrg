@@ -9,7 +9,14 @@ from fastapi.staticfiles import StaticFiles
 from app.database import Base, engine
 # Importar app.models registra todas las tablas en Base.metadata.
 from app import models  # noqa: F401
-from app.routers import auth_router, colegio_router, usuario_router
+from app.routers import (
+    auth_router,
+    cancha_router,
+    colegio_router,
+    fase_router,
+    torneo_router,
+    usuario_router,
+)
 
 
 @asynccontextmanager
@@ -40,6 +47,9 @@ app.include_router(auth_router.router)
 app.include_router(usuario_router.router)
 # Registra /colegios antes del frontend para que FastAPI atienda estas rutas.
 app.include_router(colegio_router.router)
+app.include_router(cancha_router.router)
+app.include_router(torneo_router.router)
+app.include_router(fase_router.router)
 
 @app.get("/diagrama")
 def ver_diagrama():

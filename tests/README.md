@@ -28,3 +28,6 @@ Verificación del 10 de octubre de 2026: **11 pruebas aprobadas**.
 ## Pruebas de usuarios y seguridad
 
 `python -m unittest discover -s ../tests -p "test_usuario.py" -v` (desde `backend`). Usan SQLite en memoria.
+
+Las pruebas de Cancha, Torneo y Fase (`test_cancha.py`, `test_torneo.py`) usan la base común `base_api.py`,
+que siembra un administrador con sesión iniciada. Para correr todo: `python -m unittest discover -s ../tests -p "test_*.py" -v`.

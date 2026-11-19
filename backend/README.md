@@ -104,3 +104,14 @@ Documentación Alternativa (Redoc): http://127.0.0.1:8000/redoc
 
 Para proteger una ruta nueva: `Depends(requerir_roles(RolEnum.ENTRENADOR))` (ver `app/core/dependencies.py`).
 Si tu base de datos ya existía antes de la Fase 1, ejecuta `database/migraciones/001_fase1_usuarios.sql`.
+
+## Permisos por ruta
+
+| Ruta | Consultar (GET) | Crear / modificar |
+|---|---|---|
+| `/torneos`, `/torneos/{id}/fases`, `/fases/{id}` | Público (espectadores) | Administrador |
+| `/colegios`, `/canchas` | Cualquier usuario con sesión | Administrador |
+| `/usuarios` | Administrador (cada usuario ve solo su cuenta) | Administrador |
+
+Un torneo nace en `Inscripciones`; sus datos y fases solo se editan en ese estado. El estado cambia con
+`POST /torneos/{id}/finalizar` y `POST /torneos/{id}/cancelar`. Las tablas nuevas se crean solas al arrancar.
