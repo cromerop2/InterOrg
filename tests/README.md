@@ -34,3 +34,6 @@ que siembra un administrador con sesión iniciada. Para correr todo: `python -m 
 
 `test_equipo.py`, `test_jugador.py` y `test_pago.py` usan `BaseInscripcionTest` (en `base_api.py`), que agrega un colegio,
 un torneo Sub-17 con reglas pequeñas y dos entrenadores con sesión. Toda la suite tarda un poco porque cada prueba encripta contraseñas.
+
+`test_partido.py`, `test_alineacion.py` y `test_tabla.py` usan `BasePartidoTest` (en `base_api.py`): un torneo En_Curso con 6 equipos Habilitados (A a F),
+dos fases, dos canchas y dos árbitros. Con `INICIALIZAR_GRUPOS = False` la prueba arma sus propios grupos.

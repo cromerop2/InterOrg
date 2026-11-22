@@ -9,15 +9,26 @@ from app.core.enums import RolEnum
 from app.core.security import decodificar_token
 from app.database import get_db
 from app.models.usuario_model import UsuarioModel
+from app.repositories.alineacion_repository import AlineacionRepository
+from app.repositories.cancha_repository import CanchaRepository
 from app.repositories.colegio_repository import ColegioRepository
 from app.repositories.equipo_repository import EquipoRepository
+from app.repositories.fase_repository import FaseRepository
+from app.repositories.fila_posicion_repository import FilaPosicionRepository
 from app.repositories.jugador_repository import JugadorRepository
+from app.repositories.marcador_repository import MarcadorRepository
 from app.repositories.pago_repository import PagoRepository
+from app.repositories.partido_repository import PartidoRepository
+from app.repositories.tabla_posiciones_repository import TablaPosicionesRepository
 from app.repositories.torneo_repository import TorneoRepository
 from app.repositories.usuario_repository import UsuarioRepository
+from app.services.alineacion_service import AlineacionService
+from app.services.cancha_service import CanchaService
 from app.services.equipo_service import EquipoService
 from app.services.jugador_service import JugadorService
 from app.services.pago_service import PagoService
+from app.services.partido_service import PartidoService
+from app.services.tabla_posiciones_service import TablaPosicionesService
 from app.services.usuario_service import UsuarioService
 
 # auto_error=False: la falta de token se responde con nuestro propio 401.
@@ -58,6 +69,40 @@ def get_pago_service(db: Session = Depends(get_db)) -> PagoService:
     # Los repositorios comparten la sesión de la petición, así sus cambios se guardan en un solo commit.
     return PagoService(
         PagoRepository(db), EquipoRepository(db), TorneoRepository(db), _armar_equipo_service(db)
+    )
+
+
+def get_partido_service(db: Session = Depends(get_db)) -> PartidoService:
+    return PartidoService(
+        PartidoRepository(db),
+        MarcadorRepository(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+        EquipoRepository(db),
+        TablaPosicionesRepository(db),
+        UsuarioRepository(db),
+        CanchaService(CanchaRepository(db), PartidoRepository(db)),
+    )
+
+
+def get_alineacion_service(db: Session = Depends(get_db)) -> AlineacionService:
+    return AlineacionService(
+        AlineacionRepository(db),
+        PartidoRepository(db),
+        EquipoRepository(db),
+        JugadorRepository(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+    )
+
+
+def get_tabla_service(db: Session = Depends(get_db)) -> TablaPosicionesService:
+    return TablaPosicionesService(
+        TablaPosicionesRepository(db),
+        FilaPosicionRepository(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+        EquipoRepository(db),
     )
 
 

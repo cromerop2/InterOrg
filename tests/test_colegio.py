@@ -13,6 +13,7 @@ import unittest
 os.environ["DATABASE_URL"] = "sqlite://"
 # La configuración exige SECRET_KEY; esta es solo para pruebas.
 os.environ.setdefault("SECRET_KEY", "clave-solo-para-pruebas-0123456789-abcdef")
+os.environ.setdefault("BCRYPT_ROUNDS", "4")  # encriptar rápido en pruebas
 # Permite importar el paquete app desde este archivo ubicado en tests.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 

@@ -1,5 +1,7 @@
 """Endpoints de canchas: cualquier usuario con sesión consulta; solo el Administrador modifica."""
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy.orm import Session
 
@@ -7,6 +9,8 @@ from app.core.dependencies import obtener_usuario_actual, requerir_roles
 from app.core.enums import RolEnum
 from app.database import get_db
 from app.repositories.cancha_repository import CanchaRepository
+from app.repositories.partido_repository import PartidoRepository
+from app.schemas.partido_schema import PartidoResponse
 from app.schemas.cancha_schema import (
     CanchaCreate,
     CanchaEstadoUpdate,
@@ -22,7 +26,7 @@ con_sesion = Depends(obtener_usuario_actual)
 
 
 def get_cancha_service(db: Session = Depends(get_db)) -> CanchaService:
-    return CanchaService(CanchaRepository(db))
+    return CanchaService(CanchaRepository(db), PartidoRepository(db))
 
 
 @router.post("/", response_model=CanchaResponse, status_code=status.HTTP_201_CREATED, dependencies=[solo_admin])
@@ -39,6 +43,16 @@ def obtener_todas(solo_activas: bool = True, service: CanchaService = Depends(ge
 @router.get("/{id_cancha}", response_model=CanchaResponse, dependencies=[con_sesion])
 def obtener_por_id(id_cancha: int = Path(gt=0), service: CanchaService = Depends(get_cancha_service)):
     return service.obtener_por_id(id_cancha)
+
+
+@router.get("/{id_cancha}/agenda", response_model=list[PartidoResponse], dependencies=[con_sesion])
+def obtener_agenda(
+    fecha: date,
+    id_cancha: int = Path(gt=0),
+    service: CanchaService = Depends(get_cancha_service),
+):
+    """Partidos de la cancha en un día (?fecha=2026-12-05), para el personal de logística."""
+    return service.obtener_agenda(id_cancha, fecha)
 
 
 @router.patch("/{id_cancha}", response_model=CanchaResponse, dependencies=[solo_admin])

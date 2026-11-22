@@ -3,12 +3,17 @@
 Al crear un modelo nuevo, agrégalo aquí; así create_all lo incluye.
 """
 
+from app.models.alineacion_model import AlineacionModel
 from app.models.cancha_model import CanchaModel
 from app.models.colegio_model import ColegioModel
 from app.models.equipo_model import EquipoModel
 from app.models.fase_model import FaseModel
+from app.models.fila_posicion_model import FilaPosicionModel
 from app.models.jugador_model import JugadorModel
+from app.models.marcador_model import MarcadorModel
 from app.models.pago_model import PagoModel
+from app.models.partido_model import PartidoModel
+from app.models.tabla_posiciones_model import TablaPosicionesModel
 from app.models.torneo_model import TorneoModel
 from app.models.usuario_model import (
     AdministradorModel,
@@ -18,12 +23,17 @@ from app.models.usuario_model import (
 )
 
 __all__ = [
+    "AlineacionModel",
     "CanchaModel",
     "ColegioModel",
     "EquipoModel",
     "FaseModel",
+    "FilaPosicionModel",
     "JugadorModel",
+    "MarcadorModel",
     "PagoModel",
+    "PartidoModel",
+    "TablaPosicionesModel",
     "TorneoModel",
     "UsuarioModel",
     "AdministradorModel",

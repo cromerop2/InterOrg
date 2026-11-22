@@ -17,7 +17,7 @@ def hashear_password(password_plana: str) -> str:
     datos = password_plana.encode("utf-8")
     if len(datos) > LIMITE_BYTES_PASSWORD:
         raise ValueError(f"La contraseña no puede superar {LIMITE_BYTES_PASSWORD} bytes.")
-    return bcrypt.hashpw(datos, bcrypt.gensalt()).decode("utf-8")
+    return bcrypt.hashpw(datos, bcrypt.gensalt(rounds=settings.BCRYPT_ROUNDS)).decode("utf-8")
 
 
 def verificar_password(password_plana: str, password_hash: str) -> bool:

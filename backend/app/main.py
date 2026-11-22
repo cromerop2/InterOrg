@@ -17,6 +17,8 @@ from app.routers import (
     fase_router,
     jugador_router,
     pago_router,
+    partido_router,
+    tabla_router,
     torneo_router,
     usuario_router,
 )
@@ -56,6 +58,8 @@ app.include_router(fase_router.router)
 app.include_router(equipo_router.router)
 app.include_router(jugador_router.router)
 app.include_router(pago_router.router)
+app.include_router(partido_router.router)
+app.include_router(tabla_router.router)
 
 @app.get("/diagrama")
 def ver_diagrama():

@@ -8,6 +8,7 @@ from pathlib import Path
 # Se configura antes de importar app para evitar usar la BD indicada en .env.
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ.setdefault("SECRET_KEY", "clave-solo-para-pruebas-0123456789-abcdef")
+os.environ.setdefault("BCRYPT_ROUNDS", "4")  # encriptar rápido en pruebas
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 import jwt

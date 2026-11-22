@@ -133,3 +133,16 @@ Un torneo nace en `Inscripciones`; sus datos y fases solo se editan en ese estad
 
 La categoría "Sub-N" limita la edad a N años cumplidos en la fecha de inicio del torneo; otras categorías no tienen límite.
 Un mismo documento no puede estar activo en dos equipos del mismo torneo (sí en torneos distintos).
+
+## Programación de partidos (Fase 4A)
+
+1. Con el torneo **En_Curso**, el Administrador arma los grupos de la fase de grupos: `POST /fases/{id}/grupos` con `{"grupos": {"Grupo A": [1, 2, 3]}}`.
+2. Programa cruces con `POST /partidos/` (fase, equipos Habilitados, cancha, `fecha_hora` local sin zona horaria, árbitro opcional). Se valida que:
+   las fechas estén dentro del torneo, la fase anterior haya finalizado, en grupos ambos equipos compartan grupo, la pareja no se repita en la fase,
+   y que cancha, equipos y árbitro no se crucen con otro partido (dos partidos se cruzan si empiezan con menos de `duracion_partido_min` minutos de diferencia; 90 por defecto).
+3. Cada partido nace con su marcador 0-0. Se puede `reprogramar`, `suspender` (libera el horario) y asignar árbitro (`PUT /partidos/{id}/arbitro`).
+4. Cada entrenador envía su planilla con `PUT /partidos/{id}/equipos/{id_equipo}/alineacion` (si ya había una, la reemplaza mientras el partido esté Programado).
+   Reglas del torneo: `titulares` (11) exactos y `max_suplentes` (7); los jugadores deben ser del equipo, estar activos y no sancionados.
+5. Consultas: calendario de la fase (público), `GET /equipos/{id}/calendario`, `GET /partidos/mis-asignaciones` (árbitro), `GET /canchas/{id}/agenda?fecha=`.
+
+`BCRYPT_ROUNDS` (12 por defecto) en el `.env` controla el costo de encriptar contraseñas; las pruebas lo bajan a 4.
