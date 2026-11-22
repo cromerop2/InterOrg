@@ -3,12 +3,21 @@
 from fastapi import APIRouter, Depends, Path, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import obtener_usuario_actual, requerir_roles
+from app.core.dependencies import (
+    get_equipo_service,
+    get_usuario_service,
+    obtener_usuario_actual,
+    requerir_roles,
+)
 from app.core.enums import RolEnum
 from app.database import get_db
 from app.repositories.colegio_repository import ColegioRepository
 from app.schemas.colegio_schema import ColegioCreate, ColegioResponse, ColegioUpdate
+from app.schemas.equipo_schema import EquipoResponse
+from app.schemas.usuario_schema import UsuarioResponse
 from app.services.colegio_service import ColegioService
+from app.services.equipo_service import EquipoService
+from app.services.usuario_service import UsuarioService
 
 
 # Todas las rutas empiezan por /colegios y aparecen bajo Colegios en Swagger.
@@ -61,3 +70,21 @@ def actualizar_detalles(
 ):
     """PATCH /colegios/{id_colegio}: cambia solo los campos enviados, incluido estado_activo."""
     return service.actualizar_detalles(id_colegio, datos)
+
+
+@router.get("/{id_colegio}/equipos", response_model=list[EquipoResponse], dependencies=[solo_admin])
+def obtener_equipos_inscritos(id_colegio: int = Path(gt=0), equipos: EquipoService = Depends(get_equipo_service)):
+    """Equipos del colegio en cualquier torneo."""
+    return equipos.obtener_equipos_inscritos(id_colegio)
+
+
+@router.put(
+    "/{id_colegio}/entrenadores/{id_entrenador}", response_model=UsuarioResponse, dependencies=[solo_admin]
+)
+def vincular_entrenador(
+    id_colegio: int = Path(gt=0),
+    id_entrenador: int = Path(gt=0),
+    usuarios: UsuarioService = Depends(get_usuario_service),
+):
+    """Enlaza a un Entrenador con el colegio que representa."""
+    return usuarios.vincular_entrenador(id_colegio, id_entrenador)

@@ -13,7 +13,10 @@ from app.routers import (
     auth_router,
     cancha_router,
     colegio_router,
+    equipo_router,
     fase_router,
+    jugador_router,
+    pago_router,
     torneo_router,
     usuario_router,
 )
@@ -50,6 +53,9 @@ app.include_router(colegio_router.router)
 app.include_router(cancha_router.router)
 app.include_router(torneo_router.router)
 app.include_router(fase_router.router)
+app.include_router(equipo_router.router)
+app.include_router(jugador_router.router)
+app.include_router(pago_router.router)
 
 @app.get("/diagrama")
 def ver_diagrama():

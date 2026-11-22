@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import requerir_roles
 from app.core.enums import EstadoTorneoEnum, RolEnum
 from app.database import get_db
+from app.repositories.equipo_repository import EquipoRepository
 from app.repositories.torneo_repository import TorneoRepository
 from app.schemas.torneo_schema import TorneoCreate, TorneoResponse, TorneoUpdate
 from app.services.torneo_service import TorneoService
@@ -16,7 +17,7 @@ solo_admin = Depends(requerir_roles(RolEnum.ADMINISTRADOR))
 
 
 def get_torneo_service(db: Session = Depends(get_db)) -> TorneoService:
-    return TorneoService(TorneoRepository(db))
+    return TorneoService(TorneoRepository(db), EquipoRepository(db))
 
 
 @router.post("/", response_model=TorneoResponse, status_code=status.HTTP_201_CREATED, dependencies=[solo_admin])
@@ -42,6 +43,12 @@ def actualizar_detalles(
     service: TorneoService = Depends(get_torneo_service),
 ):
     return service.actualizar_detalles(id_torneo, datos)
+
+
+@router.post("/{id_torneo}/iniciar", response_model=TorneoResponse, dependencies=[solo_admin])
+def iniciar_torneo(id_torneo: int = Path(gt=0), service: TorneoService = Depends(get_torneo_service)):
+    """Exige el mínimo de equipos Habilitados y bloquea las plantillas de todos los equipos."""
+    return service.iniciar_torneo(id_torneo)
 
 
 @router.post("/{id_torneo}/finalizar", response_model=TorneoResponse, dependencies=[solo_admin])

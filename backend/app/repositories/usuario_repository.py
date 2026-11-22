@@ -71,3 +71,13 @@ class UsuarioRepository:
         self.db.commit()
         self.db.refresh(usuario)
         return usuario
+
+    def asignar_colegio(self, id_entrenador: int, id_colegio: int | None) -> UsuarioModel | None:
+        """Vincula (o desvincula, con None) a un entrenador con un colegio. None si el usuario no existe."""
+        usuario = self.obtener_por_id(id_entrenador)
+        if usuario is None:
+            return None
+        usuario.colegio_id = id_colegio
+        self.db.commit()
+        self.db.refresh(usuario)
+        return usuario

@@ -115,3 +115,21 @@ Si tu base de datos ya existía antes de la Fase 1, ejecuta `database/migracione
 
 Un torneo nace en `Inscripciones`; sus datos y fases solo se editan en ese estado. El estado cambia con
 `POST /torneos/{id}/finalizar` y `POST /torneos/{id}/cancelar`. Las tablas nuevas se crean solas al arrancar.
+
+## Inscripción de equipos (Fase 3)
+
+1. El Administrador crea el torneo y sus reglas: `min_jugadores` (11 por defecto), `max_jugadores` (25), `min_equipos` (2), `permite_transferencias` (false).
+2. Un Entrenador inscribe su equipo (`POST /equipos/`, queda **Preinscrito**) y agrega jugadores (`POST /equipos/{id}/jugadores`).
+3. El Entrenador reporta el pago (`POST /equipos/{id}/pagos`): el equipo pasa a **Pago_Pendiente**.
+4. El Administrador valida (`PATCH /pagos/{id}/validar`, o `PATCH /equipos/{id}/auditar`). Aprobar exige el mínimo de jugadores y deja el equipo **Habilitado**; rechazar exige observaciones y lo devuelve a Preinscrito.
+5. `POST /torneos/{id}/iniciar` exige el mínimo de equipos Habilitados, pasa el torneo a En_Curso y bloquea todas las plantillas.
+
+| Ruta | Quién |
+|---|---|
+| `POST /equipos/`, jugadores (alta y baja), `POST /equipos/{id}/pagos` | Entrenador dueño del equipo |
+| Ver un equipo, su plantilla y sus pagos | Administrador o entrenador dueño |
+| `GET /torneos/{id}/equipos` | Cualquier usuario con sesión |
+| Auditar, validar pagos, descalificar, sancionar, transferir, iniciar torneo, vincular entrenador | Administrador |
+
+La categoría "Sub-N" limita la edad a N años cumplidos en la fecha de inicio del torneo; otras categorías no tienen límite.
+Un mismo documento no puede estar activo en dos equipos del mismo torneo (sí en torneos distintos).

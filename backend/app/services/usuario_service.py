@@ -3,6 +3,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
+from app.core.enums import RolEnum
 from app.core.security import (
     crear_token_acceso,
     hash_falso,
@@ -85,3 +86,15 @@ class UsuarioService:
         if usuario is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuario no encontrado.")
         return usuario
+
+    def vincular_entrenador(self, id_colegio: int, id_entrenador: int) -> UsuarioModel:
+        """Enlaza a un Entrenador con un colegio activo."""
+        colegio = self.colegio_repository.obtener_por_id(id_colegio)
+        if colegio is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "El colegio solicitado no existe.")
+        if not colegio.estado_activo:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "El colegio está inactivo.")
+        usuario = self.obtener_usuario(id_entrenador)
+        if usuario.rol != RolEnum.ENTRENADOR:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Solo se puede vincular a un Entrenador.")
+        return self.repository.asignar_colegio(id_entrenador, id_colegio)

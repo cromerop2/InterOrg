@@ -10,7 +10,14 @@ from app.core.security import decodificar_token
 from app.database import get_db
 from app.models.usuario_model import UsuarioModel
 from app.repositories.colegio_repository import ColegioRepository
+from app.repositories.equipo_repository import EquipoRepository
+from app.repositories.jugador_repository import JugadorRepository
+from app.repositories.pago_repository import PagoRepository
+from app.repositories.torneo_repository import TorneoRepository
 from app.repositories.usuario_repository import UsuarioRepository
+from app.services.equipo_service import EquipoService
+from app.services.jugador_service import JugadorService
+from app.services.pago_service import PagoService
 from app.services.usuario_service import UsuarioService
 
 # auto_error=False: la falta de token se responde con nuestro propio 401.
@@ -27,6 +34,31 @@ def _no_autenticado() -> HTTPException:
 
 def get_usuario_service(db: Session = Depends(get_db)) -> UsuarioService:
     return UsuarioService(UsuarioRepository(db), ColegioRepository(db))
+
+
+def _armar_equipo_service(db: Session) -> EquipoService:
+    return EquipoService(
+        EquipoRepository(db),
+        TorneoRepository(db),
+        ColegioRepository(db),
+        JugadorRepository(db),
+        PagoRepository(db),
+    )
+
+
+def get_equipo_service(db: Session = Depends(get_db)) -> EquipoService:
+    return _armar_equipo_service(db)
+
+
+def get_jugador_service(db: Session = Depends(get_db)) -> JugadorService:
+    return JugadorService(JugadorRepository(db), EquipoRepository(db), TorneoRepository(db))
+
+
+def get_pago_service(db: Session = Depends(get_db)) -> PagoService:
+    # Los repositorios comparten la sesión de la petición, así sus cambios se guardan en un solo commit.
+    return PagoService(
+        PagoRepository(db), EquipoRepository(db), TorneoRepository(db), _armar_equipo_service(db)
+    )
 
 
 def obtener_usuario_actual(

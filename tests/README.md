@@ -31,3 +31,6 @@ Verificación del 10 de octubre de 2026: **11 pruebas aprobadas**.
 
 Las pruebas de Cancha, Torneo y Fase (`test_cancha.py`, `test_torneo.py`) usan la base común `base_api.py`,
 que siembra un administrador con sesión iniciada. Para correr todo: `python -m unittest discover -s ../tests -p "test_*.py" -v`.
+
+`test_equipo.py`, `test_jugador.py` y `test_pago.py` usan `BaseInscripcionTest` (en `base_api.py`), que agrega un colegio,
+un torneo Sub-17 con reglas pequeñas y dos entrenadores con sesión. Toda la suite tarda un poco porque cada prueba encripta contraseñas.
