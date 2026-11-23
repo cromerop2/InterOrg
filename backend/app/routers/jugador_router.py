@@ -8,6 +8,7 @@ from app.models.usuario_model import UsuarioModel
 from app.schemas.jugador_schema import (
     JugadorCreate,
     JugadorResponse,
+    JugadorSancionFechas,
     JugadorSancionUpdate,
     JugadorTransferencia,
 )
@@ -67,6 +68,18 @@ def actualizar_sancion(
     service: JugadorService = Depends(get_jugador_service),
 ):
     return service.actualizar_estado_sancion(id_jugador, datos.sancionado)
+
+
+@router.post(
+    "/jugadores/{id_jugador}/sanciones", response_model=JugadorResponse, dependencies=[solo_admin]
+)
+def aplicar_sancion_disciplinaria(
+    datos: JugadorSancionFechas,
+    id_jugador: int = Path(gt=0),
+    service: JugadorService = Depends(get_jugador_service),
+):
+    """Suspende al jugador por N fechas (se suman a las que ya tenga)."""
+    return service.aplicar_sancion_disciplinaria(id_jugador, datos.fechas_suspension)
 
 
 @router.post("/jugadores/{id_jugador}/transferir", response_model=JugadorResponse, dependencies=[solo_admin])

@@ -160,3 +160,15 @@ Un mismo documento no puede estar activo en dos equipos del mismo torneo (sí en
    `GET /fases/{id}/clasificados` devuelve quiénes avanzan (`clasifican_por_grupo`, 2 por defecto, o los ganadores de la eliminatoria).
 6. Público: minuto a minuto (`GET /partidos/{id}/eventos`), tablas y goleadores (`GET /torneos/{id}/goleadores`, solo partidos Finalizados; los autogoles no cuentan).
    El entrenador ve las estadísticas de su equipo en `GET /equipos/{id}/estadisticas`.
+
+## Programación automática, actas y sanciones (Fase 5)
+
+- **Programar una fase sola:** `POST /fases/{id}/fixture` (o `POST /torneos/{id}/programacion`, que elige la siguiente fase pendiente). Genera todos los cruces
+  (todos contra todos dentro de cada grupo; en eliminatoria, primero contra último entre los clasificados de la fase anterior) con cancha, fecha y hora sin cruces.
+  Opciones (todas opcionales): `fecha_inicio`, `horas` (por defecto 08:00 a 16:00 cada 2 h), `canchas` y `asignar_arbitros`. Si no alcanzan los horarios del torneo, no se crea nada.
+  Una fase nueva empieza el día siguiente al último partido de la anterior.
+- **Corregir un acta cerrada:** `PATCH /partidos/{id}/acta` con `motivo_auditoria` y el marcador correcto **o** `walkover_ganador_id`. Revierte el resultado viejo en la tabla, aplica el nuevo
+  y lo registra en `GET /partidos/{id}/auditoria`. Si el grupo ya está cerrado hay que reabrirlo (`POST /tablas/{id}/reabrir`); con la fase finalizada ya no se corrige.
+- **Sanciones por fechas:** `POST /jugadores/{id}/sanciones` con `fechas_suspension`. Cada partido cerrado de su equipo (W.O. incluido) descuenta una fecha y al llegar a 0 queda libre.
+  La tarjeta roja suspende `fechas_por_roja` fechas (1 por defecto), que empiezan a cumplirse en el partido siguiente. `PATCH /jugadores/{id}/sancion` con `false` levanta la sanción.
+- Si tu base de datos ya existía, ejecuta `database/migraciones/002_fase5_suspension.sql`.

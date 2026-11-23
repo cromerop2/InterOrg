@@ -73,6 +73,21 @@ class MarcadorService:
             and marcador.goles_local == marcador.goles_visitante
         )
 
+    def corregir_resultado(
+        self,
+        id_partido: int,
+        goles_local: int,
+        goles_visitante: int,
+        penales_local: int | None = None,
+        penales_visitante: int | None = None,
+        confirmar: bool = True,
+    ) -> MarcadorModel:
+        """Cambia el resultado de un acta YA cerrada. Solo lo usa la corrección auditada del Administrador."""
+        marcador = self.obtener_por_partido(id_partido)
+        return self.repository.actualizar_goles(
+            marcador, goles_local, goles_visitante, penales_local, penales_visitante, confirmar
+        )
+
     def fijar_resultado_final(self, id_partido: int, confirmar: bool = True) -> MarcadorModel:
         marcador = self._editable(id_partido)
         return self.repository.fijar_resultado_final(marcador, confirmar)

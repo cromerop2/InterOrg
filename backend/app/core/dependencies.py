@@ -10,6 +10,7 @@ from app.core.security import decodificar_token
 from app.database import get_db
 from app.models.usuario_model import UsuarioModel
 from app.repositories.alineacion_repository import AlineacionRepository
+from app.repositories.auditoria_acta_repository import AuditoriaActaRepository
 from app.repositories.cancha_repository import CanchaRepository
 from app.repositories.colegio_repository import ColegioRepository
 from app.repositories.equipo_repository import EquipoRepository
@@ -23,11 +24,13 @@ from app.repositories.partido_repository import PartidoRepository
 from app.repositories.tabla_posiciones_repository import TablaPosicionesRepository
 from app.repositories.torneo_repository import TorneoRepository
 from app.repositories.usuario_repository import UsuarioRepository
+from app.services.acta_service import ActaService
 from app.services.alineacion_service import AlineacionService
 from app.services.cancha_service import CanchaService
 from app.services.equipo_service import EquipoService
 from app.services.evento_partido_service import EventoPartidoService
 from app.services.fase_service import FaseService
+from app.services.fixture_service import FixtureService
 from app.services.fila_posicion_service import FilaPosicionService
 from app.services.juego_service import JuegoService
 from app.services.marcador_service import MarcadorService
@@ -155,6 +158,35 @@ def get_juego_service(db: Session = Depends(get_db)) -> JuegoService:
         TorneoRepository(db),
         TablaPosicionesRepository(db),
         FilaPosicionService(FilaPosicionRepository(db)),
+        EventoPartidoRepository(db),
+        JugadorRepository(db),
+    )
+
+
+def get_acta_service(db: Session = Depends(get_db)) -> ActaService:
+    return ActaService(
+        AuditoriaActaRepository(db),
+        PartidoRepository(db),
+        _armar_marcador_service(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+        TablaPosicionesRepository(db),
+        FilaPosicionService(FilaPosicionRepository(db)),
+    )
+
+
+def get_fixture_service(db: Session = Depends(get_db)) -> FixtureService:
+    return FixtureService(
+        PartidoRepository(db),
+        MarcadorRepository(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+        EquipoRepository(db),
+        TablaPosicionesRepository(db),
+        FilaPosicionRepository(db),
+        CanchaRepository(db),
+        UsuarioRepository(db),
+        get_fase_service(db),
     )
 
 

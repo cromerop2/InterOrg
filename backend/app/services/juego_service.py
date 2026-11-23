@@ -11,7 +11,9 @@ from app.core.enums import (
 from app.core.reglas import GOLES_WALKOVER, PUNTOS_EMPATE, PUNTOS_VICTORIA, obtener_regla_entera
 from app.models.marcador_model import MarcadorModel
 from app.models.partido_model import PartidoModel
+from app.repositories.evento_partido_repository import EventoPartidoRepository
 from app.repositories.fase_repository import FaseRepository
+from app.repositories.jugador_repository import JugadorRepository
 from app.repositories.partido_repository import PartidoRepository
 from app.repositories.tabla_posiciones_repository import TablaPosicionesRepository
 from app.repositories.torneo_repository import TorneoRepository
@@ -19,8 +21,6 @@ from app.schemas.marcador_schema import MarcadorUpdate
 from app.services.alineacion_service import AlineacionService
 from app.services.fila_posicion_service import FilaPosicionService
 from app.services.marcador_service import MarcadorService
-
-# Pendiente (Fase 5): modificar_acta_cerrada, que usa revertir_resultado_partido para corregir un acta.
 
 
 class JuegoService:
@@ -33,6 +33,8 @@ class JuegoService:
         torneo_repository: TorneoRepository,
         tabla_repository: TablaPosicionesRepository,
         fila_service: FilaPosicionService,
+        evento_repository: EventoPartidoRepository,
+        jugador_repository: JugadorRepository,
     ):
         self.repository = repository
         self.marcador_service = marcador_service
@@ -41,6 +43,8 @@ class JuegoService:
         self.torneo_repository = torneo_repository
         self.tabla_repository = tabla_repository
         self.fila_service = fila_service
+        self.evento_repository = evento_repository
+        self.jugador_repository = jugador_repository
 
     # ---------- árbitro ----------
     def iniciar_partido(self, id_partido: int, arbitro) -> PartidoModel:
@@ -109,7 +113,8 @@ class JuegoService:
 
     # ---------- cierre ----------
     def finalizar_encuentro(self, partido: PartidoModel, fase, torneo, estado_final: EstadoPartidoEnum) -> PartidoModel:
-        """Orquesta el cierre: fija el marcador, actualiza la tabla (si es fase de grupos) y cambia el estado.
+        """Orquesta el cierre: fija el marcador, actualiza la tabla (si es fase de grupos), descuenta fechas de
+        suspensión y cambia el estado.
         Todo se guarda en un solo commit: o se aplica completo o no se aplica nada."""
         marcador = self.marcador_service.obtener_por_partido(partido.id)
         self.marcador_service.fijar_resultado_final(partido.id, confirmar=False)
@@ -127,6 +132,12 @@ class JuegoService:
             self.fila_service.procesar_resultado_partido(
                 tabla.id, partido.equipo_visitante_id, gv, gl, victoria, empate, confirmar=False
             )
+
+        # Cada equipo cumple una fecha de suspensión con este partido (W.O. incluido); quien fue expulsado
+        # en él empieza a cumplir la suya desde el siguiente.
+        expulsados = self.evento_repository.jugadores_expulsados(partido.id)
+        for id_equipo in (partido.equipo_local_id, partido.equipo_visitante_id):
+            self.jugador_repository.descontar_fecha_suspension(id_equipo, expulsados, confirmar=False)
         return self.repository.actualizar_estado(partido.id, estado_final)  # commit de todo lo pendiente
 
     # ---------- auxiliares ----------

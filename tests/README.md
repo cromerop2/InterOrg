@@ -40,3 +40,5 @@ dos fases, dos canchas y dos árbitros. Con `INICIALIZAR_GRUPOS = False` la prue
 
 `test_juego.py`, `test_eventos.py` y `test_clasificacion.py` también usan `BasePartidoTest`, con ayudantes para jugar partidos completos
 (`preparar_partido`, `terminar_partido`, `jugar_partido`) y reglas de prueba de 2 titulares, 1 suplente y 1 sustitución.
+
+`test_fixture.py`, `test_acta.py` y `test_sancion.py` cubren la programación automática, la corrección auditada de actas y las sanciones por fechas.

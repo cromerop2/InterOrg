@@ -9,12 +9,16 @@ class MarcadorRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def crear_marcador_inicial(self, id_partido: int) -> MarcadorModel:
-        """Inserta el 0-0 de un partido nuevo. Hace commit de toda la sesión (incluido el partido)."""
+    def crear_marcador_inicial(self, id_partido: int, confirmar: bool = True) -> MarcadorModel:
+        """Inserta el 0-0 de un partido nuevo. Con confirmar=True hace commit de toda la sesión (incluido el
+        partido); con False solo lo envía a la BD, para crear varios partidos y confirmarlos juntos."""
         marcador = MarcadorModel(partido_id=id_partido)
         self.db.add(marcador)
-        self.db.commit()
-        self.db.refresh(marcador)
+        if confirmar:
+            self.db.commit()
+            self.db.refresh(marcador)
+        else:
+            self.db.flush()
         return marcador
 
     def obtener_por_partido(self, id_partido: int) -> MarcadorModel | None:

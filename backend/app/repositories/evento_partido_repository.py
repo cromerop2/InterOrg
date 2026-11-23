@@ -57,14 +57,17 @@ class EventoPartidoRepository:
             .scalar()
         )
 
-    def contar_tarjetas_rojas(self, id_jugador: int, excluir_id: int | None = None) -> int:
-        consulta = self.db.query(func.count(EventoPartidoModel.id)).filter(
-            EventoPartidoModel.jugador_id == id_jugador,
-            EventoPartidoModel.tipo_evento == TipoEventoEnum.TARJETA_ROJA,
+    def jugadores_expulsados(self, id_partido: int) -> set[int]:
+        """Ids de los jugadores que recibieron tarjeta roja en el partido."""
+        filas = (
+            self.db.query(EventoPartidoModel.jugador_id)
+            .filter(
+                EventoPartidoModel.partido_id == id_partido,
+                EventoPartidoModel.tipo_evento == TipoEventoEnum.TARJETA_ROJA,
+            )
+            .all()
         )
-        if excluir_id is not None:
-            consulta = consulta.filter(EventoPartidoModel.id != excluir_id)
-        return consulta.scalar()
+        return {fila[0] for fila in filas}
 
     def eliminar_evento(self, evento: EventoPartidoModel) -> None:
         """Borra el evento sin commit; el servicio lo guarda junto con la reversión de sus efectos."""

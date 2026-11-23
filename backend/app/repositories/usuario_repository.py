@@ -62,6 +62,14 @@ class UsuarioRepository:
             .all()
         )
 
+    def obtener_arbitros_activos(self) -> list[ArbitroModel]:
+        return (
+            self.db.query(ArbitroModel)
+            .filter(ArbitroModel.estado_activo.is_(True))
+            .order_by(ArbitroModel.id)
+            .all()
+        )
+
     def modificar_estado(self, id_usuario: int, activo: bool) -> UsuarioModel | None:
         """Suspende o habilita una cuenta sin borrar su historial. None si el usuario no existe."""
         usuario = self.obtener_por_id(id_usuario)

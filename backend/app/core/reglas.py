@@ -11,6 +11,7 @@ PUNTOS_VICTORIA = 3  # reglas["puntos_victoria"]
 PUNTOS_EMPATE = 1  # reglas["puntos_empate"]
 GOLES_WALKOVER = 3  # reglas["goles_walkover"]: marcador a favor de quien se presenta (3-0)
 CLASIFICAN_POR_GRUPO = 2  # reglas["clasifican_por_grupo"]
+FECHAS_POR_ROJA = 1  # reglas["fechas_por_roja"]: fechas de suspensión automática tras una tarjeta roja
 
 
 def obtener_regla_entera(torneo, clave: str, defecto: int) -> int:

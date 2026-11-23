@@ -113,6 +113,12 @@ class JugadorService:
         self._jugador(id_jugador)
         return self.repository.actualizar_estado_sancion(id_jugador, sancionado)
 
+    def aplicar_sancion_disciplinaria(self, id_jugador: int, fechas_suspension: int) -> JugadorModel:
+        """Suspende al jugador por un número de fechas: no podrá estar en las alineaciones de los próximos
+        partidos de su equipo. Cada partido cerrado del equipo descuenta una fecha."""
+        self._jugador(id_jugador)
+        return self.repository.aplicar_sancion(id_jugador, fechas_suspension)
+
     def transferir_equipo(self, id_jugador: int, nuevo_equipo_id: int) -> JugadorModel:
         """Pasa al jugador a otro equipo del mismo torneo, solo si las reglas del torneo lo permiten."""
         jugador = self._jugador(id_jugador)

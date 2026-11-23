@@ -53,6 +53,12 @@ def obtener_tabla(id_tabla: int = Path(gt=0), service: TablaPosicionesService = 
     return _con_clasificacion(service.obtener_por_id(id_tabla), service)
 
 
+@router.post("/tablas/{id_tabla}/reabrir", response_model=TablaClasificacionResponse, dependencies=[solo_admin])
+def reabrir_grupo(id_tabla: int = Path(gt=0), service: TablaPosicionesService = Depends(get_tabla_service)):
+    """Reabre un grupo cerrado para corregir un acta (mientras la fase no haya finalizado)."""
+    return _con_clasificacion(service.reabrir_grupo(id_tabla), service)
+
+
 @router.post("/tablas/{id_tabla}/cerrar", response_model=CierreGrupoResponse, dependencies=[solo_admin])
 def auditar_y_cerrar_grupo(id_tabla: int = Path(gt=0), service: TablaPosicionesService = Depends(get_tabla_service)):
     """Cierra el grupo (todos los partidos jugados) y devuelve los equipos que clasifican."""

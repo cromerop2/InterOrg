@@ -31,6 +31,14 @@ class JugadorSancionUpdate(BaseModel):
     sancionado: bool
 
 
+class JugadorSancionFechas(BaseModel):
+    """Sanción disciplinaria por un número de fechas (partidos de su equipo)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    fechas_suspension: int = Field(ge=1, le=20)
+
+
 class JugadorTransferencia(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -49,3 +57,4 @@ class JugadorResponse(BaseModel):
     posicion: str | None = None
     estado_activo: bool
     sancionado: bool
+    fechas_suspension: int = 0

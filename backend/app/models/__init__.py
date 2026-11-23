@@ -4,6 +4,7 @@ Al crear un modelo nuevo, agrégalo aquí; así create_all lo incluye.
 """
 
 from app.models.alineacion_model import AlineacionModel
+from app.models.auditoria_acta_model import AuditoriaActaModel
 from app.models.cancha_model import CanchaModel
 from app.models.colegio_model import ColegioModel
 from app.models.equipo_model import EquipoModel
@@ -25,6 +26,7 @@ from app.models.usuario_model import (
 
 __all__ = [
     "AlineacionModel",
+    "AuditoriaActaModel",
     "CanchaModel",
     "ColegioModel",
     "EquipoModel",

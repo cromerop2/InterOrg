@@ -132,6 +132,19 @@ class TablaPosicionesService:
                 visitante[0] += empate
         return sorted(empatados, key=lambda f: (-directo[f.equipo_id][0], -directo[f.equipo_id][1], f.equipo_id))
 
+    def reabrir_grupo(self, id_tabla: int) -> TablaPosicionesModel:
+        """Reabre un grupo cerrado para poder corregir un acta. No se puede si la fase ya finalizó."""
+        tabla = self.obtener_por_id(id_tabla)
+        fase = self.fase_repository.obtener_por_id(tabla.fase_id)
+        torneo = self.torneo_repository.obtener_por_id(fase.torneo_id)
+        if torneo.estado != EstadoTorneoEnum.EN_CURSO:
+            raise HTTPException(status.HTTP_409_CONFLICT, "El torneo no está En_Curso.")
+        if fase.estado == EstadoFaseEnum.FINALIZADA:
+            raise HTTPException(status.HTTP_409_CONFLICT, "La fase ya finalizó: sus grupos no se reabren.")
+        if not tabla.estado_cierre:
+            raise HTTPException(status.HTTP_409_CONFLICT, "El grupo no está cerrado.")
+        return self.repository.actualizar_estado_cierre(id_tabla, False)
+
     def auditar_y_cerrar_grupo(self, id_tabla: int) -> tuple[TablaPosicionesModel, list[int]]:
         """Cierra el grupo si todos sus partidos terminaron y cada pareja se enfrentó.
         Devuelve la tabla cerrada y los equipos que clasifican, en orden de posición."""

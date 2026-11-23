@@ -15,22 +15,6 @@ class ClasificacionApiTest(BasePartidoTest):
     def orden(self, grupo="Grupo A"):
         return [f["equipo_id"] for f in self.tablas()[grupo]["filas"]]
 
-    def cerrar_grupo(self, grupo, h=None):
-        return self.client.post(f"/tablas/{self.tablas()[grupo]['id']}/cerrar", headers=h or self.h_admin)
-
-    def jugar_toda_la_fase_de_grupos(self):
-        """A gana sus dos partidos, B le gana a C, y D empata con E."""
-        self.jugar_partido("A", "B", 2, 0)
-        self.jugar_partido("A", "C", 1, 0)
-        self.jugar_partido("B", "C", 1, 0)
-        self.jugar_partido("D", "E", 1, 1)
-
-    def cerrar_fase_de_grupos(self):
-        for grupo in ("Grupo A", "Grupo B"):
-            self.assertEqual(self.cerrar_grupo(grupo).status_code, 200)
-        r = self.client.post(f"/fases/{self.fase_grupos['id']}/cerrar", headers=self.h_admin)
-        self.assertEqual(r.status_code, 200, r.text)
-
     # ---------- desempate ----------
     def test_desempate_por_enfrentamiento_directo(self):
         # A y B quedan igualados en puntos, diferencia y goles a favor, pero B le ganó a A.

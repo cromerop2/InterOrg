@@ -3,7 +3,7 @@
 from fastapi import HTTPException, status
 
 from app.core.enums import EstadoPartidoEnum, EstadoTorneoEnum, TipoEventoEnum
-from app.core.reglas import MAXIMO_SUSTITUCIONES, obtener_regla_entera
+from app.core.reglas import FECHAS_POR_ROJA, MAXIMO_SUSTITUCIONES, obtener_regla_entera
 from app.models.evento_partido_model import EventoPartidoModel
 from app.models.partido_model import PartidoModel
 from app.repositories.alineacion_repository import AlineacionRepository
@@ -85,7 +85,7 @@ class EventoPartidoService:
                 self._exigir_en_cancha(datos.jugador_secundario_id, estado)
 
         evento = self.repository.crear_evento(partido.id, datos)
-        self.procesar_efecto_secundario(evento, partido)
+        self.procesar_efecto_secundario(evento, partido, torneo)
         self.repository.confirmar()  # el evento y sus efectos se guardan juntos
         return evento
 
@@ -104,9 +104,11 @@ class EventoPartidoService:
         if entra in estado.ya_entraron or entra in estado.en_cancha:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Ese suplente ya entró al campo.")
 
-    def procesar_efecto_secundario(self, evento: EventoPartidoModel, partido: PartidoModel, revertir: bool = False) -> None:
-        """Gol y autogol mueven el marcador; la tarjeta roja deja al jugador sancionado (suspensión automática).
-        Con revertir=True deshace esos efectos (al borrar un evento registrado por error). No hace commit."""
+    def procesar_efecto_secundario(
+        self, evento: EventoPartidoModel, partido: PartidoModel, torneo, revertir: bool = False
+    ) -> None:
+        """Gol y autogol mueven el marcador; la tarjeta roja suspende al jugador `fechas_por_roja` fechas (1 por
+        defecto). Con revertir=True deshace esos efectos (al borrar un evento registrado por error). No hace commit."""
         delta = -1 if revertir else 1
         if evento.tipo_evento == TipoEventoEnum.GOL:
             self.marcador_service.registrar_anotacion(partido.id, evento.equipo_id, delta, confirmar=False)
@@ -116,18 +118,19 @@ class EventoPartidoService:
             )
             self.marcador_service.registrar_anotacion(partido.id, rival, delta, confirmar=False)
         elif evento.tipo_evento == TipoEventoEnum.TARJETA_ROJA:
+            fechas = obtener_regla_entera(torneo, "fechas_por_roja", FECHAS_POR_ROJA)
             if not revertir:
-                self.jugador_repository.actualizar_estado_sancion(evento.jugador_id, True, confirmar=False)
-            elif self.repository.contar_tarjetas_rojas(evento.jugador_id, excluir_id=evento.id) == 0:
-                self.jugador_repository.actualizar_estado_sancion(evento.jugador_id, False, confirmar=False)
+                self.jugador_repository.aplicar_sancion(evento.jugador_id, fechas, confirmar=False)
+            else:
+                self.jugador_repository.reducir_suspension(evento.jugador_id, fechas, confirmar=False)
 
     def eliminar_evento(self, id_partido: int, id_evento: int, arbitro) -> None:
         """Borra un evento registrado por error (solo con el partido En_Juego) y revierte sus efectos."""
-        partido, _ = self._partido_en_juego(id_partido, arbitro)
+        partido, torneo = self._partido_en_juego(id_partido, arbitro)
         evento = self.repository.obtener_por_id(id_evento)
         if evento is None or evento.partido_id != partido.id:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "El evento solicitado no existe en este partido.")
-        self.procesar_efecto_secundario(evento, partido, revertir=True)
+        self.procesar_efecto_secundario(evento, partido, torneo, revertir=True)
         self.repository.eliminar_evento(evento)
         self.repository.confirmar()
 

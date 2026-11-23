@@ -26,6 +26,25 @@ class PartidoRepository:
             self.db.flush()
         return partido
 
+    def confirmar(self) -> None:
+        self.db.commit()
+
+    def deshacer(self) -> None:
+        """Descarta todo lo pendiente de la transacción (si algo falla a mitad de una operación en lote)."""
+        self.db.rollback()
+
+    def listar_en_ventana(self, desde: datetime, hasta: datetime) -> list[PartidoModel]:
+        """Partidos no suspendidos que empiezan entre `desde` y `hasta`, de cualquier torneo."""
+        return (
+            self.db.query(PartidoModel)
+            .filter(
+                PartidoModel.estado != EstadoPartidoEnum.SUSPENDIDO,
+                PartidoModel.fecha_hora >= desde,
+                PartidoModel.fecha_hora <= hasta,
+            )
+            .all()
+        )
+
     def obtener_por_id(self, id_partido: int) -> PartidoModel | None:
         return self.db.get(PartidoModel, id_partido)
 
