@@ -7,6 +7,7 @@ from app.models.alineacion_model import AlineacionModel
 from app.models.cancha_model import CanchaModel
 from app.models.colegio_model import ColegioModel
 from app.models.equipo_model import EquipoModel
+from app.models.evento_partido_model import EventoPartidoModel
 from app.models.fase_model import FaseModel
 from app.models.fila_posicion_model import FilaPosicionModel
 from app.models.jugador_model import JugadorModel
@@ -27,6 +28,7 @@ __all__ = [
     "CanchaModel",
     "ColegioModel",
     "EquipoModel",
+    "EventoPartidoModel",
     "FaseModel",
     "FilaPosicionModel",
     "JugadorModel",

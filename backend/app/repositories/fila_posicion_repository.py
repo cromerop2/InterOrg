@@ -29,3 +29,21 @@ class FilaPosicionRepository:
             .filter(FilaPosicionModel.tabla_id == id_tabla, FilaPosicionModel.equipo_id == id_equipo)
             .first()
         )
+
+    def obtener_por_equipo(self, id_equipo: int) -> list[FilaPosicionModel]:
+        """Una fila por cada grupo en el que ha jugado el equipo (puede haber varias fases de grupos)."""
+        return (
+            self.db.query(FilaPosicionModel)
+            .filter(FilaPosicionModel.equipo_id == id_equipo)
+            .order_by(FilaPosicionModel.tabla_id)
+            .all()
+        )
+
+    def actualizar_metricas(self, fila: FilaPosicionModel, metricas: dict, confirmar: bool = True) -> FilaPosicionModel:
+        """Sobrescribe los contadores de la fila. Con confirmar=False el commit lo hace otro repositorio."""
+        for campo, valor in metricas.items():
+            setattr(fila, campo, valor)
+        if confirmar:
+            self.db.commit()
+            self.db.refresh(fila)
+        return fila

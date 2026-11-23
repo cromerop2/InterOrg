@@ -177,14 +177,15 @@ class BasePartidoTest(BaseInscripcionTest):
 
     Equipos A, C y E son del entrenador 1; B, D y F del entrenador 2. Cada uno tiene 3 jugadores.
     Con INICIALIZAR_GRUPOS=True se arman "Grupo A" = [A, B, C] y "Grupo B" = [D, E]; F queda sin grupo.
-    Reglas de prueba: 2 titulares y máximo 1 suplente por alineación. El torneo va del 2026-12-01 al 2026-12-20.
+    Reglas de prueba: 2 titulares, máximo 1 suplente y 1 sustitución por equipo. El torneo va del 2026-12-01 al 2026-12-20.
     """
 
-    REGLAS = {**BaseInscripcionTest.REGLAS, "titulares": 2, "max_suplentes": 1}
+    REGLAS = {**BaseInscripcionTest.REGLAS, "titulares": 2, "max_suplentes": 1, "max_sustituciones": 1}
     INICIALIZAR_GRUPOS = True
 
     def setUp(self):
         super().setUp()
+        self._dia = 2  # cada partido que arma preparar_partido cae en un día distinto (diciembre de 2026)
         self.fase_grupos = self.crear_fase("Fase de Grupos", "Grupos")
         self.fase_final = self.crear_fase("Final", "Eliminatoria_Directa")
 
@@ -252,3 +253,54 @@ class BasePartidoTest(BaseInscripcionTest):
     def ids_jugadores(self, letra):
         r = self.client.get(f"/equipos/{self.eq[letra]['id']}/jugadores", headers=self.h_admin)
         return [j["id"] for j in r.json()]
+
+    # ---------- el día del partido ----------
+    def h_dueno(self, letra):
+        return self.h_ent1 if letra in "ACE" else self.h_ent2
+
+    def enviar_planilla(self, partido, letra):
+        """Los dos primeros jugadores del equipo son titulares y el tercero va al banco."""
+        cuerpo = {"jugadores": [{"jugador_id": j, "es_titular": i < 2} for i, j in enumerate(self.ids_jugadores(letra))]}
+        r = self.client.put(
+            f"/partidos/{partido['id']}/equipos/{self.eq[letra]['id']}/alineacion", json=cuerpo, headers=self.h_dueno(letra)
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+
+    def preparar_partido(self, local, visitante, arbitro=True, alineaciones=True, **kwargs):
+        """Programa el partido (con el árbitro 1 y un día libre) y envía las dos alineaciones."""
+        if "hora" not in kwargs:
+            kwargs["hora"] = f"2026-12-{self._dia:02d}T10:00:00"
+            self._dia += 1
+        extra = {"arbitro_id": self.arb1_id} if arbitro else {}
+        partido = self.programar_ok(local, visitante, **extra, **kwargs)
+        if alineaciones:
+            self.enviar_planilla(partido, local if isinstance(local, str) else "A")
+            self.enviar_planilla(partido, visitante if isinstance(visitante, str) else "B")
+        return partido
+
+    def iniciar(self, partido, h=None):
+        return self.client.post(f"/partidos/{partido['id']}/iniciar", headers=h or self.h_arb1)
+
+    def terminar_partido(self, partido, goles_local, goles_visitante, penales=None):
+        """Inicia, registra el marcador y cierra el acta como árbitro 1. Devuelve el partido Finalizado."""
+        r = self.iniciar(partido)
+        self.assertEqual(r.status_code, 200, r.text)
+        cuerpo = {"goles_local": goles_local, "goles_visitante": goles_visitante}
+        if penales:
+            cuerpo.update(goles_penales_local=penales[0], goles_penales_visitante=penales[1])
+        r = self.client.put(f"/partidos/{partido['id']}/marcador", json=cuerpo, headers=self.h_arb1)
+        self.assertEqual(r.status_code, 200, r.text)
+        r = self.client.post(f"/partidos/{partido['id']}/cerrar", headers=self.h_arb1)
+        self.assertEqual(r.status_code, 200, r.text)
+        return r.json()
+
+    def jugar_partido(self, local, visitante, goles_local, goles_visitante, **kwargs):
+        return self.terminar_partido(self.preparar_partido(local, visitante, **kwargs), goles_local, goles_visitante)
+
+    def tablas(self):
+        r = self.client.get(f"/fases/{self.fase_grupos['id']}/tablas")
+        self.assertEqual(r.status_code, 200)
+        return {t["nombre_grupo"]: t for t in r.json()}
+
+    def fila(self, letra, grupo="Grupo A"):
+        return next(f for f in self.tablas()[grupo]["filas"] if f["equipo_id"] == self.eq[letra]["id"])

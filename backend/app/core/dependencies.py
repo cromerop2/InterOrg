@@ -13,6 +13,7 @@ from app.repositories.alineacion_repository import AlineacionRepository
 from app.repositories.cancha_repository import CanchaRepository
 from app.repositories.colegio_repository import ColegioRepository
 from app.repositories.equipo_repository import EquipoRepository
+from app.repositories.evento_partido_repository import EventoPartidoRepository
 from app.repositories.fase_repository import FaseRepository
 from app.repositories.fila_posicion_repository import FilaPosicionRepository
 from app.repositories.jugador_repository import JugadorRepository
@@ -25,6 +26,11 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.services.alineacion_service import AlineacionService
 from app.services.cancha_service import CanchaService
 from app.services.equipo_service import EquipoService
+from app.services.evento_partido_service import EventoPartidoService
+from app.services.fase_service import FaseService
+from app.services.fila_posicion_service import FilaPosicionService
+from app.services.juego_service import JuegoService
+from app.services.marcador_service import MarcadorService
 from app.services.jugador_service import JugadorService
 from app.services.pago_service import PagoService
 from app.services.partido_service import PartidoService
@@ -54,6 +60,7 @@ def _armar_equipo_service(db: Session) -> EquipoService:
         ColegioRepository(db),
         JugadorRepository(db),
         PagoRepository(db),
+        FilaPosicionRepository(db),
     )
 
 
@@ -96,13 +103,58 @@ def get_alineacion_service(db: Session = Depends(get_db)) -> AlineacionService:
     )
 
 
-def get_tabla_service(db: Session = Depends(get_db)) -> TablaPosicionesService:
+def _armar_tabla_service(db: Session) -> TablaPosicionesService:
     return TablaPosicionesService(
         TablaPosicionesRepository(db),
         FilaPosicionRepository(db),
         FaseRepository(db),
         TorneoRepository(db),
         EquipoRepository(db),
+        PartidoRepository(db),
+        MarcadorRepository(db),
+    )
+
+
+def get_tabla_service(db: Session = Depends(get_db)) -> TablaPosicionesService:
+    return _armar_tabla_service(db)
+
+
+def get_fase_service(db: Session = Depends(get_db)) -> FaseService:
+    return FaseService(
+        FaseRepository(db),
+        TorneoRepository(db),
+        TablaPosicionesRepository(db),
+        PartidoRepository(db),
+        MarcadorRepository(db),
+        _armar_tabla_service(db),
+    )
+
+
+def _armar_marcador_service(db: Session) -> MarcadorService:
+    return MarcadorService(MarcadorRepository(db), PartidoRepository(db), FaseRepository(db))
+
+
+def get_evento_service(db: Session = Depends(get_db)) -> EventoPartidoService:
+    return EventoPartidoService(
+        EventoPartidoRepository(db),
+        PartidoRepository(db),
+        AlineacionRepository(db),
+        JugadorRepository(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+        _armar_marcador_service(db),
+    )
+
+
+def get_juego_service(db: Session = Depends(get_db)) -> JuegoService:
+    return JuegoService(
+        PartidoRepository(db),
+        _armar_marcador_service(db),
+        get_alineacion_service(db),
+        FaseRepository(db),
+        TorneoRepository(db),
+        TablaPosicionesRepository(db),
+        FilaPosicionService(FilaPosicionRepository(db)),
     )
 
 

@@ -6,6 +6,7 @@ from app.core.dependencies import get_tabla_service, requerir_roles
 from app.core.enums import RolEnum
 from app.models.tabla_posiciones_model import TablaPosicionesModel
 from app.schemas.tabla_posiciones_schema import (
+    CierreGrupoResponse,
     FilaPosicionResponse,
     GruposConfiguracion,
     TablaClasificacionResponse,
@@ -50,3 +51,10 @@ def obtener_tablas_de_la_fase(id_fase: int = Path(gt=0), service: TablaPosicione
 @router.get("/tablas/{id_tabla}", response_model=TablaClasificacionResponse)
 def obtener_tabla(id_tabla: int = Path(gt=0), service: TablaPosicionesService = Depends(get_tabla_service)):
     return _con_clasificacion(service.obtener_por_id(id_tabla), service)
+
+
+@router.post("/tablas/{id_tabla}/cerrar", response_model=CierreGrupoResponse, dependencies=[solo_admin])
+def auditar_y_cerrar_grupo(id_tabla: int = Path(gt=0), service: TablaPosicionesService = Depends(get_tabla_service)):
+    """Cierra el grupo (todos los partidos jugados) y devuelve los equipos que clasifican."""
+    tabla, clasificados = service.auditar_y_cerrar_grupo(id_tabla)
+    return CierreGrupoResponse(**_con_clasificacion(tabla, service).model_dump(), clasificados=clasificados)

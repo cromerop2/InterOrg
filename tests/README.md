@@ -37,3 +37,6 @@ un torneo Sub-17 con reglas pequeñas y dos entrenadores con sesión. Toda la su
 
 `test_partido.py`, `test_alineacion.py` y `test_tabla.py` usan `BasePartidoTest` (en `base_api.py`): un torneo En_Curso con 6 equipos Habilitados (A a F),
 dos fases, dos canchas y dos árbitros. Con `INICIALIZAR_GRUPOS = False` la prueba arma sus propios grupos.
+
+`test_juego.py`, `test_eventos.py` y `test_clasificacion.py` también usan `BasePartidoTest`, con ayudantes para jugar partidos completos
+(`preparar_partido`, `terminar_partido`, `jugar_partido`) y reglas de prueba de 2 titulares, 1 suplente y 1 sustitución.

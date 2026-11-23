@@ -51,3 +51,11 @@ class PartidoResponse(BaseModel):
     arbitro_id: int | None = None
     fecha_hora: datetime
     estado: EstadoPartidoEnum
+
+
+class PartidoWalkover(BaseModel):
+    """Equipo que se presentó y gana por W.O."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    equipo_ganador_id: int = Field(gt=0)

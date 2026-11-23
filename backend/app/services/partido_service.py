@@ -29,8 +29,8 @@ from app.repositories.usuario_repository import UsuarioRepository
 from app.schemas.partido_schema import PartidoCreate
 from app.services.cancha_service import CanchaService
 
-# Pendiente (Fase 4B): iniciar_partido, eventos, marcador, cierre de acta y W.O.
-# Pendiente (Fase 5): generar_programacion_general y modificar_acta_cerrada.
+# El día del partido (inicio, eventos, marcador, cierre de acta y W.O.) está en JuegoService.
+# Pendiente (Fase 5): generar_programacion_general.
 
 
 class PartidoService:

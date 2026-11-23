@@ -10,6 +10,7 @@ from app.core.dependencies import (
 from app.core.enums import RolEnum
 from app.models.usuario_model import UsuarioModel
 from app.schemas.equipo_schema import EquipoAuditoria, EquipoCreate, EquipoResponse
+from app.schemas.tabla_posiciones_schema import FilaPosicionResponse
 from app.services.equipo_service import EquipoService
 
 router = APIRouter(tags=["Equipos"])
@@ -56,3 +57,13 @@ def auditar_inscripcion(
 @router.post("/equipos/{id_equipo}/descalificar", response_model=EquipoResponse, dependencies=[solo_admin])
 def descalificar(id_equipo: int = Path(gt=0), service: EquipoService = Depends(get_equipo_service)):
     return service.descalificar(id_equipo)
+
+
+@router.get("/equipos/{id_equipo}/estadisticas", response_model=list[FilaPosicionResponse])
+def obtener_estadisticas_actuales(
+    id_equipo: int = Path(gt=0),
+    usuario: UsuarioModel = Depends(obtener_usuario_actual),
+    service: EquipoService = Depends(get_equipo_service),
+):
+    """Puntos, goles y rendimiento del equipo en cada grupo. Lo ve su entrenador o un Administrador."""
+    return service.obtener_estadisticas_actuales(id_equipo, usuario)

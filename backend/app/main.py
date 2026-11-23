@@ -15,6 +15,7 @@ from app.routers import (
     colegio_router,
     equipo_router,
     fase_router,
+    juego_router,
     jugador_router,
     pago_router,
     partido_router,
@@ -59,6 +60,7 @@ app.include_router(equipo_router.router)
 app.include_router(jugador_router.router)
 app.include_router(pago_router.router)
 app.include_router(partido_router.router)
+app.include_router(juego_router.router)
 app.include_router(tabla_router.router)
 
 @app.get("/diagrama")

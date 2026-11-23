@@ -50,13 +50,16 @@ class JugadorRepository:
             .scalar()
         )
 
-    def actualizar_estado_sancion(self, id_jugador: int, estado: bool) -> JugadorModel | None:
+    def actualizar_estado_sancion(
+        self, id_jugador: int, estado: bool, confirmar: bool = True
+    ) -> JugadorModel | None:
         jugador = self.obtener_por_id(id_jugador)
         if jugador is None:
             return None
         jugador.sancionado = estado
-        self.db.commit()
-        self.db.refresh(jugador)
+        if confirmar:
+            self.db.commit()
+            self.db.refresh(jugador)
         return jugador
 
     def dar_de_baja(self, id_jugador: int) -> JugadorModel | None:

@@ -7,15 +7,15 @@ from app.core.enums import EstadoInscripcionEnum, EstadoPagoEnum, EstadoTorneoEn
 from app.core.permisos import exigir_acceso_a_equipo
 from app.core.reglas import MINIMO_JUGADORES, obtener_regla_entera
 from app.models.equipo_model import EquipoModel
+from app.models.fila_posicion_model import FilaPosicionModel
 from app.models.torneo_model import TorneoModel
 from app.repositories.colegio_repository import ColegioRepository
 from app.repositories.equipo_repository import EquipoRepository
+from app.repositories.fila_posicion_repository import FilaPosicionRepository
 from app.repositories.jugador_repository import JugadorRepository
 from app.repositories.pago_repository import PagoRepository
 from app.repositories.torneo_repository import TorneoRepository
 from app.schemas.equipo_schema import EquipoCreate
-
-# Pendiente (Fase 4): obtener_estadisticas_actuales, que lee FilaPosicion.
 
 
 class EquipoService:
@@ -26,12 +26,14 @@ class EquipoService:
         colegio_repository: ColegioRepository,
         jugador_repository: JugadorRepository,
         pago_repository: PagoRepository,
+        fila_repository: FilaPosicionRepository,
     ):
         self.repository = repository
         self.torneo_repository = torneo_repository
         self.colegio_repository = colegio_repository
         self.jugador_repository = jugador_repository
         self.pago_repository = pago_repository
+        self.fila_repository = fila_repository
 
     # ---------- inscripción ----------
     def registrar_equipo(self, datos_equipo: EquipoCreate, entrenador) -> EquipoModel:
@@ -91,6 +93,12 @@ class EquipoService:
         if self.colegio_repository.obtener_por_id(id_colegio) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "El colegio solicitado no existe.")
         return self.repository.obtener_por_colegio(id_colegio)
+
+    def obtener_estadisticas_actuales(self, id_equipo: int, usuario) -> list[FilaPosicionModel]:
+        """Puntos, goles y rendimiento del equipo: una fila por cada grupo en que ha jugado."""
+        equipo = self.obtener_equipo(id_equipo)
+        exigir_acceso_a_equipo(usuario, equipo)
+        return self.fila_repository.obtener_por_equipo(equipo.id)
 
     # ---------- reglas ----------
     def validar_minimo_jugadores(self, id_equipo: int) -> bool:

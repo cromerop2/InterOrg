@@ -39,3 +39,10 @@ class FaseResponse(BaseModel):
     nombre: str
     tipo_formato: TipoFormatoEnum
     estado: EstadoFaseEnum
+
+
+class ClasificadosResponse(BaseModel):
+    """Equipos que avanzan de una fase (grupo por grupo en fase de grupos; ganadores en eliminatoria)."""
+
+    fase_id: int
+    clasificados: list[int]

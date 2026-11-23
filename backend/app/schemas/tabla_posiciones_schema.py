@@ -59,3 +59,9 @@ class TablaClasificacionResponse(TablaPosicionesResponse):
     """La tabla con sus filas ya ordenadas por posición."""
 
     filas: list[FilaPosicionResponse]
+
+
+class CierreGrupoResponse(TablaClasificacionResponse):
+    """El grupo ya cerrado y los equipos que clasifican, en orden de posición."""
+
+    clasificados: list[int]

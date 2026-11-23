@@ -47,11 +47,15 @@ class FaseRepository:
             .first()
         )
 
-    def actualizar_estado(self, id_fase: int, nuevo_estado: EstadoFaseEnum) -> FaseModel | None:
+    def actualizar_estado(
+        self, id_fase: int, nuevo_estado: EstadoFaseEnum, confirmar: bool = True
+    ) -> FaseModel | None:
+        """Con confirmar=False el cambio se guarda junto con el del siguiente repositorio que haga commit."""
         fase = self.obtener_por_id(id_fase)
         if fase is None:
             return None
         fase.estado = nuevo_estado
-        self.db.commit()
-        self.db.refresh(fase)
+        if confirmar:
+            self.db.commit()
+            self.db.refresh(fase)
         return fase

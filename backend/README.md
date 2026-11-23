@@ -146,3 +146,17 @@ Un mismo documento no puede estar activo en dos equipos del mismo torneo (sí en
 5. Consultas: calendario de la fase (público), `GET /equipos/{id}/calendario`, `GET /partidos/mis-asignaciones` (árbitro), `GET /canchas/{id}/agenda?fecha=`.
 
 `BCRYPT_ROUNDS` (12 por defecto) en el `.env` controla el costo de encriptar contraseñas; las pruebas lo bajan a 4.
+
+## El día del partido (Fase 4B)
+
+1. El árbitro designado inicia el partido (`POST /partidos/{id}/iniciar`); exige la alineación de ambos equipos. Si un equipo no la envió, el Administrador puede decretar W.O. (`POST /partidos/{id}/walkover`, marcador 3-0).
+2. Con el partido En_Juego, el árbitro registra eventos (`POST /partidos/{id}/eventos`): gol, asistencia, tarjetas, sustitución y autogol.
+   Se validan contra la alineación: quien marca debe estar en el campo, quien entra en una sustitución debe ser un suplente que no haya jugado, quien sale debe estar en el campo, y no se supera `max_sustituciones` (5 por defecto).
+   Un gol o autogol actualiza el marcador solo; una tarjeta roja expulsa al jugador y lo deja **sancionado** hasta que el Administrador levante la sanción. Un evento por error se borra con `DELETE` y se revierte su efecto.
+3. El árbitro puede fijar el marcador (`PUT /partidos/{id}/marcador`; los penales solo en eliminatorias) y cierra el acta (`POST /partidos/{id}/cerrar`).
+   Al cerrar, el partido queda Finalizado, el resultado definitivo y la tabla de posiciones al día. En una eliminatoria empatada se exigen penales con un ganador.
+4. Tabla de posiciones: puntos (`puntos_victoria` 3, `puntos_empate` 1), diferencia de goles, goles a favor y, si siguen empatados, el enfrentamiento directo.
+5. El Administrador cierra cada grupo (`POST /tablas/{id}/cerrar`, requiere que todas las parejas hayan jugado) y luego la fase (`POST /fases/{id}/cerrar`), lo que habilita la siguiente.
+   `GET /fases/{id}/clasificados` devuelve quiénes avanzan (`clasifican_por_grupo`, 2 por defecto, o los ganadores de la eliminatoria).
+6. Público: minuto a minuto (`GET /partidos/{id}/eventos`), tablas y goleadores (`GET /torneos/{id}/goleadores`, solo partidos Finalizados; los autogoles no cuentan).
+   El entrenador ve las estadísticas de su equipo en `GET /equipos/{id}/estadisticas`.

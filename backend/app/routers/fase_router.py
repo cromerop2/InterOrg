@@ -1,23 +1,15 @@
 """Endpoints de fases: la consulta es pública; solo el Administrador las define."""
 
 from fastapi import APIRouter, Depends, Path, status
-from sqlalchemy.orm import Session
 
-from app.core.dependencies import requerir_roles
+from app.core.dependencies import get_fase_service, requerir_roles
 from app.core.enums import RolEnum
-from app.database import get_db
-from app.repositories.fase_repository import FaseRepository
-from app.repositories.torneo_repository import TorneoRepository
-from app.schemas.fase_schema import ConfiguracionFases, FaseCreate, FaseResponse
+from app.schemas.fase_schema import ClasificadosResponse, ConfiguracionFases, FaseCreate, FaseResponse
 from app.services.fase_service import FaseService
 
 router = APIRouter(tags=["Fases"])
 
 solo_admin = Depends(requerir_roles(RolEnum.ADMINISTRADOR))
-
-
-def get_fase_service(db: Session = Depends(get_db)) -> FaseService:
-    return FaseService(FaseRepository(db), TorneoRepository(db))
 
 
 @router.post(
@@ -54,3 +46,15 @@ def obtener_por_torneo(id_torneo: int = Path(gt=0), service: FaseService = Depen
 @router.get("/fases/{id_fase}", response_model=FaseResponse)
 def obtener_por_id(id_fase: int = Path(gt=0), service: FaseService = Depends(get_fase_service)):
     return service.obtener_por_id(id_fase)
+
+
+@router.post("/fases/{id_fase}/cerrar", response_model=FaseResponse, dependencies=[solo_admin])
+def cerrar_fase(id_fase: int = Path(gt=0), service: FaseService = Depends(get_fase_service)):
+    """Finaliza la fase (todos sus partidos terminados y, en grupos, todos los grupos cerrados)."""
+    return service.cerrar_fase(id_fase)
+
+
+@router.get("/fases/{id_fase}/clasificados", response_model=ClasificadosResponse)
+def determinar_clasificados(id_fase: int = Path(gt=0), service: FaseService = Depends(get_fase_service)):
+    """Equipos que avanzan de la fase (público)."""
+    return ClasificadosResponse(fase_id=id_fase, clasificados=service.determinar_clasificados(id_fase))

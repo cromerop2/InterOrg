@@ -6,6 +6,11 @@ MINIMO_EQUIPOS = 2  # reglas["min_equipos"]: equipos Habilitados para poder inic
 TITULARES = 11  # reglas["titulares"]: jugadores que arrancan en una alineación
 MAXIMO_SUPLENTES = 7  # reglas["max_suplentes"]
 DURACION_PARTIDO_MIN = 90  # reglas["duracion_partido_min"]: se usa para evitar cruces de horario
+MAXIMO_SUSTITUCIONES = 5  # reglas["max_sustituciones"]: cambios permitidos por equipo y partido
+PUNTOS_VICTORIA = 3  # reglas["puntos_victoria"]
+PUNTOS_EMPATE = 1  # reglas["puntos_empate"]
+GOLES_WALKOVER = 3  # reglas["goles_walkover"]: marcador a favor de quien se presenta (3-0)
+CLASIFICAN_POR_GRUPO = 2  # reglas["clasifican_por_grupo"]
 
 
 def obtener_regla_entera(torneo, clave: str, defecto: int) -> int:
