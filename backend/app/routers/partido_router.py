@@ -10,7 +10,7 @@ from app.core.dependencies import (
 )
 from app.core.enums import RolEnum
 from app.models.usuario_model import UsuarioModel
-from app.schemas.alineacion_schema import AlineacionEnvio, AlineacionResponse
+from app.schemas.alineacion_schema import AlineacionDetalleResponse, AlineacionEnvio, AlineacionResponse
 from app.schemas.marcador_schema import MarcadorResponse
 from app.schemas.partido_schema import (
     PartidoArbitro,
@@ -105,6 +105,6 @@ def enviar_alineacion(
     return service.enviar_planilla_oficial(id_partido, id_equipo, datos.jugadores, entrenador)
 
 
-@router.get("/partidos/{id_partido}/alineaciones", response_model=list[AlineacionResponse], dependencies=[con_sesion])
+@router.get("/partidos/{id_partido}/alineaciones", response_model=list[AlineacionDetalleResponse], dependencies=[con_sesion])
 def obtener_alineaciones(id_partido: int = Path(gt=0), service: AlineacionService = Depends(get_alineacion_service)):
-    return service.obtener_por_partido(id_partido)
+    return service.obtener_detalle_por_partido(id_partido)

@@ -88,6 +88,15 @@ class EquipoService:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "El torneo solicitado no existe.")
         return self.repository.obtener_por_torneo(id_torneo)
 
+    def obtener_habilitados_publicos(self, id_torneo: int) -> list[EquipoModel]:
+        """Equipos Habilitados del torneo (consulta pública)."""
+        if self.torneo_repository.obtener_por_id(id_torneo) is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "El torneo solicitado no existe.")
+        return self.repository.obtener_por_torneo(id_torneo, EstadoInscripcionEnum.HABILITADO)
+
+    def obtener_mis_equipos(self, entrenador) -> list[EquipoModel]:
+        return self.repository.obtener_por_entrenador(entrenador.id)
+
     def obtener_equipos_inscritos(self, id_colegio: int) -> list[EquipoModel]:
         """Todos los equipos de un colegio, en cualquier torneo."""
         if self.colegio_repository.obtener_por_id(id_colegio) is None:

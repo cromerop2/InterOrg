@@ -28,6 +28,17 @@ class EquipoAuditoria(BaseModel):
     id_pago: int = Field(gt=0)
 
 
+class EquipoPublicoResponse(BaseModel):
+    """Lo mínimo de un equipo habilitado que ve cualquier visitante (tablas, calendario)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    colegio_id: int
+    nombre: str
+    escudo_url: str | None = None
+
+
 class EquipoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

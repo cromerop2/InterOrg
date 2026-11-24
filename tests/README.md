@@ -42,3 +42,9 @@ dos fases, dos canchas y dos árbitros. Con `INICIALIZAR_GRUPOS = False` la prue
 (`preparar_partido`, `terminar_partido`, `jugar_partido`) y reglas de prueba de 2 titulares, 1 suplente y 1 sustitución.
 
 `test_fixture.py`, `test_acta.py` y `test_sancion.py` cubren la programación automática, la corrección auditada de actas y las sanciones por fechas.
+
+## Fase 6: esquema SQL, entidades y flujo completo
+
+- `test_esquema_sql.py`: `database/schema.sql` está al día con los modelos, crea las 18 tablas y sus tipos ENUM. Con `TEST_PG_URL` (cadena para `psql`, p. ej. `postgresql://usuario@host/base_vacia`) también ejecuta el script en un PostgreSQL real.
+- `test_fase.py` y `test_marcador.py`: ciclo de estados de las fases y vida del marcador (0-0, eventos, acta cerrada, penales).
+- `test_flujo_completo.py`: crear torneo → inscribir equipos → pagar → programar → jugar → cerrar acta → tabla actualizada → cerrar grupo, fase y torneo, todo por la API.

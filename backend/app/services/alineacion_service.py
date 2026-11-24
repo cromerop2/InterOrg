@@ -125,6 +125,19 @@ class AlineacionService:
             for id_equipo in (partido.equipo_local_id, partido.equipo_visitante_id)
         )
 
+    def obtener_detalle_por_partido(self, id_partido: int) -> list[dict]:
+        """Alineaciones con nombre, posición y camiseta de cada jugador."""
+        resultado = []
+        for fila in self.obtener_por_partido(id_partido):
+            jugador = self.jugador_repository.obtener_por_id(fila.jugador_id)
+            resultado.append({
+                "id": fila.id, "partido_id": fila.partido_id, "equipo_id": fila.equipo_id,
+                "jugador_id": fila.jugador_id, "es_titular": fila.es_titular,
+                "numero_camiseta": fila.numero_camiseta if fila.numero_camiseta is not None else jugador.numero_camiseta,
+                "nombre_completo": jugador.nombre_completo, "posicion": jugador.posicion,
+            })
+        return resultado
+
     def obtener_por_partido(self, id_partido: int) -> list[AlineacionModel]:
         if self.partido_repository.obtener_por_id(id_partido) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "El partido solicitado no existe.")

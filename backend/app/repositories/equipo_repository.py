@@ -42,6 +42,14 @@ class EquipoRepository:
             consulta = consulta.filter(EquipoModel.estado_inscripcion == estado)
         return consulta.order_by(EquipoModel.id).all()
 
+    def obtener_por_entrenador(self, id_entrenador: int) -> list[EquipoModel]:
+        return (
+            self.db.query(EquipoModel)
+            .filter(EquipoModel.entrenador_id == id_entrenador)
+            .order_by(EquipoModel.id)
+            .all()
+        )
+
     def obtener_por_colegio(self, id_colegio: int) -> list[EquipoModel]:
         return (
             self.db.query(EquipoModel)

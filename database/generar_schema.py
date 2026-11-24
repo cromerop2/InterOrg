@@ -13,14 +13,28 @@ sys.path.insert(0, str(RAIZ / "backend"))
 os.environ.setdefault("DATABASE_URL", "postgresql+pg8000://u:p@localhost/db")
 os.environ.setdefault("SECRET_KEY", "solo-para-generar-sql")
 
+from sqlalchemy import Enum
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql.base import CreateEnumType
 from sqlalchemy.schema import CreateIndex, CreateTable
+
+dialecto = postgresql.dialect()
 
 import app.models  # noqa: F401  (registra los modelos)
 from app.database import Base
 
-dialecto = postgresql.dialect()
 bloques = ["-- Generado desde los modelos con database/generar_schema.py. No editar a mano.\n"]
+
+# PostgreSQL exige crear cada tipo ENUM antes de las tablas que lo usan.
+tipos = {}
+for tabla in Base.metadata.sorted_tables:
+    for columna in tabla.columns:
+        if isinstance(columna.type, Enum):
+            tipos[columna.type.name] = columna.type
+for nombre in sorted(tipos):
+    valores = postgresql.ENUM(*tipos[nombre].enums, name=nombre)
+    bloques.append(str(CreateEnumType(valores).compile(dialect=dialecto)).strip() + ";")
+
 for tabla in Base.metadata.sorted_tables:
     bloques.append(str(CreateTable(tabla).compile(dialect=dialecto)).strip() + ";")
     for indice in sorted(tabla.indexes, key=lambda i: i.name or ""):

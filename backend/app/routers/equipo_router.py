@@ -9,7 +9,7 @@ from app.core.dependencies import (
 )
 from app.core.enums import RolEnum
 from app.models.usuario_model import UsuarioModel
-from app.schemas.equipo_schema import EquipoAuditoria, EquipoCreate, EquipoResponse
+from app.schemas.equipo_schema import EquipoAuditoria, EquipoCreate, EquipoPublicoResponse, EquipoResponse
 from app.schemas.tabla_posiciones_schema import FilaPosicionResponse
 from app.services.equipo_service import EquipoService
 
@@ -27,6 +27,21 @@ def registrar_equipo(
 ):
     """Inscribe un equipo del entrenador autenticado (estado inicial Preinscrito)."""
     return service.registrar_equipo(datos, entrenador)
+
+
+@router.get("/equipos/mis-equipos", response_model=list[EquipoResponse])
+def obtener_mis_equipos(
+    entrenador: UsuarioModel = Depends(requerir_roles(RolEnum.ENTRENADOR)),
+    service: EquipoService = Depends(get_equipo_service),
+):
+    """Los equipos inscritos por el entrenador autenticado."""
+    return service.obtener_mis_equipos(entrenador)
+
+
+@router.get("/torneos/{id_torneo}/equipos/publico", response_model=list[EquipoPublicoResponse])
+def obtener_habilitados_publicos(id_torneo: int = Path(gt=0), service: EquipoService = Depends(get_equipo_service)):
+    """Público: equipos Habilitados del torneo, solo nombre y escudo."""
+    return service.obtener_habilitados_publicos(id_torneo)
 
 
 @router.get("/equipos/{id_equipo}", response_model=EquipoResponse)
